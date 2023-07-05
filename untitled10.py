@@ -437,7 +437,7 @@ myTable = PrettyTable([which_dataset]+classifiers)
 
 colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray']
 
-plt.figure()
+plt.figure(figsize=(10,7))
 for method_index in range(len(methods)):
     myTable.add_row([methods[method_index]]+ list(np.round(array_confusion_matrix[method_index,:],5)))
     plt.plot(np.arange(method_index,78,13),array_confusion_matrix[method_index,:],'.',color = colours[method_index], label = str(methods[method_index]))
