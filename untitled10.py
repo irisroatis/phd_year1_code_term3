@@ -12,6 +12,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn import metrics
 from feature_engine.encoding import MeanEncoder
 import matplotlib.pyplot as plt
@@ -136,12 +137,14 @@ def calc_conf_matrix(X_train,y_train,X_test, y_test,classifier):
         model = LogisticRegression(penalty = 'none')  
     elif classifier == 'kNN':
         model = KNeighborsClassifier()  
-    elif classifier == 'decision_tree':
+    elif classifier == 'dec_tree':
         model = DecisionTreeClassifier()
-    elif classifier == 'random_forest':
+    elif classifier == 'rand_for':
         model = RandomForestClassifier()
     elif  classifier == 'grad_boost':
         model = GradientBoostingClassifier()
+    elif classifier == 'naive':
+        model= GaussianNB()
     else:
         assert('Classifier unknown')
     
@@ -306,54 +309,54 @@ def whole_process(df, df_test, continuous_variables, target_variable, which_data
 
 
 methods = ['not binned','bin_test','binned','simple','onehot','target','effect', 'glmm','leave']
-classifiers = ['logistic','kNN','decision_tree','random_forest','grad_boost']
+classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
 
 
-which_dataset = 'Simulated Dataset'
-how_many_rows = 500
-how_many_rows_test = 10000
+# which_dataset = 'Simulated Dataset'
+# how_many_rows = 500
+# how_many_rows_test = 10000
 
 
-e1 = [0,0]
-e2 = [1,1]
-std1 = np.array(([1,0],[0,1]))
-std2 =  np.array(([1,0],[0,1]))
+# # e1 = [0,0]
+# # e2 = [1,1]
+# # std1 = np.array(([1,0],[0,1]))
+# # std2 =  np.array(([1,0],[0,1]))
 
 
-testing_data, belonging_classes = generating_test_data(1, how_many_rows, e1, std1,e2, std2)
-d = {'feature1':testing_data[0][:,0], 'feature2':testing_data[0][:,1],'target':belonging_classes[0]}
-df = pd.DataFrame(data=d)
-df.to_csv('simulated_dataset.csv', index=False)
-testing_data_test, belonging_classes_test = generating_test_data(1, how_many_rows_test, e1, std1,e2, std2)
-d_test = {'feature1':testing_data_test[0][:,0], 'feature2':testing_data_test[0][:,1],'target':belonging_classes_test[0]}
-df_test = pd.DataFrame(data=d_test)
-df_test.to_csv('simulated_dataset_test.csv', index=False)
+# # testing_data, belonging_classes = generating_test_data(1, how_many_rows, e1, std1,e2, std2)
+# # d = {'feature1':testing_data[0][:,0], 'feature2':testing_data[0][:,1],'target':belonging_classes[0]}
+# # df = pd.DataFrame(data=d)
+# # df.to_csv('simulated_dataset.csv', index=False)
+# # testing_data_test, belonging_classes_test = generating_test_data(1, how_many_rows_test, e1, std1,e2, std2)
+# # d_test = {'feature1':testing_data_test[0][:,0], 'feature2':testing_data_test[0][:,1],'target':belonging_classes_test[0]}
+# # df_test = pd.DataFrame(data=d_test)
+# # df_test.to_csv('simulated_dataset_test.csv', index=False)
 
 
 
-df = pd.read_csv('simulated_dataset.csv')
-df_test = pd.read_csv('simulated_dataset_test.csv')
+# df = pd.read_csv('simulated_dataset.csv')
+# df_test = pd.read_csv('simulated_dataset_test.csv')
 
 
-continuous_variables=['feature1', 'feature2']
-target_variable = 'target'
-categorical_variables = []
+# continuous_variables=['feature1', 'feature2']
+# target_variable = 'target'
+# categorical_variables = []
 
-how_to_bin ='fixed_number'
-nr_bins = 10
-confusion_matrix = whole_process(df, df_test, continuous_variables, target_variable, which_dataset, how_to_bin, nr_bins)
-array_confusion_matrix = np.array(confusion_matrix)
+# how_to_bin ='fixed_number'
+# nr_bins = 10
+# confusion_matrix = whole_process(df, df_test, continuous_variables, target_variable, which_dataset, how_to_bin, nr_bins)
+# array_confusion_matrix = np.array(confusion_matrix)
 
 
 ################################################################################################################################################
 ########################################################################
 ########### WINE QUALITY
 
-# which_dataset = 'Wine Quality'
-# df = pd.read_csv('wine_dataset.csv')
-# target_variable = 'quality' # Making sure the name of the target variable is known
-# df[target_variable] = df[target_variable].replace(['bad'], 0)
-# df[target_variable] = df[target_variable].replace(['good'], 1)
+which_dataset = 'Wine Quality'
+df = pd.read_csv('wine_dataset.csv')
+target_variable = 'quality' # Making sure the name of the target variable is known
+df[target_variable] = df[target_variable].replace(['bad'], 0)
+df[target_variable] = df[target_variable].replace(['good'], 1)
 
 ########################################################################
 
@@ -381,46 +384,76 @@ array_confusion_matrix = np.array(confusion_matrix)
 
 
 
-# how_many_0s = len(df[df[target_variable] == 0])
-# how_many_1s = len(df[df[target_variable] == 1])
-# size = how_many_0s + how_many_1s
-# continuous_variables = set(df.columns)
-# continuous_variables.remove(target_variable)
+how_many_0s = len(df[df[target_variable] == 0])
+how_many_1s = len(df[df[target_variable] == 1])
+size = how_many_0s + how_many_1s
+continuous_variables = set(df.columns)
+continuous_variables.remove(target_variable)
 
 
-# how_many_cv = 5
-# how_to_bin ='fixed_number'
-# nr_bins = 10
+how_many_cv = 5
+how_to_bin ='fixed_number'
+nr_bins = 10
 
-# array_confusion_matrix = np.zeros((len(methods),len(classifiers)))
+conf_matrix_list = []
 
-# for index in range(how_many_cv):
+array_confusion_matrix = np.zeros((len(methods),len(classifiers)))
+for index in range(how_many_cv):
 
-#     randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
-#     not_in_randomlist = list(set(range(0,size)) - set(randomlist))
-#     df_test = df.iloc[not_in_randomlist,:]
-#     df_train = df.iloc[randomlist,:]
-#     confusion_matrix = whole_process(df_train, df_test, continuous_variables, target_variable, which_dataset, how_to_bin, nr_bins)
-#     array_confusion_matrix += np.array(confusion_matrix)
+    randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
+    not_in_randomlist = list(set(range(0,size)) - set(randomlist))
+    
+    
+    df_test = df.iloc[not_in_randomlist,:]
+    df_train = df.iloc[randomlist,:]
+    confusion_matrix = whole_process(df_train, df_test, continuous_variables, target_variable, which_dataset, how_to_bin, nr_bins)
+    array_confusion_matrix += np.array(confusion_matrix)
+    conf_matrix_list.append(np.array(confusion_matrix))
 
 
-# array_confusion_matrix /= how_many_cv
+array_confusion_matrix /= how_many_cv
 
 ################################################################################################################################################
 
-
-# stop 
+mi_array = np.zeros_like(array_confusion_matrix)
+ma_array = np.zeros_like( array_confusion_matrix)
+for i1 in range(len(methods)):
+    for i2 in range(len(classifiers)):
+        mi = 1
+        ma = 0
+        for cv in range(how_many_cv):
+            value = conf_matrix_list[cv][i1,i2]
+            if ma < value:
+                ma = value
+            if mi > value:
+                mi = value
+        mi_array[i1,i2] = mi
+        ma_array[i1,i2] = ma
 
 from prettytable import PrettyTable
  
 # Specify the Column Names while initializing the Table
 myTable = PrettyTable([which_dataset]+classifiers)
 
+colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray']
+
+plt.figure()
 for method_index in range(len(methods)):
     myTable.add_row([methods[method_index]]+ list(np.round(array_confusion_matrix[method_index,:],5)))
+    plt.plot(np.arange(method_index,78,13),array_confusion_matrix[method_index,:],'.',color = colours[method_index], label = str(methods[method_index]))
+    plt.plot(np.arange(method_index,78,13),mi_array[method_index,:],'_', color = colours[method_index])
+    plt.plot(np.arange(method_index,78,13),ma_array[method_index,:],'_', color = colours[method_index])
 print(myTable)
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.xticks(np.arange(4,78,13),labels = classifiers)
+plt.show()
+
 
 import seaborn as sns
 g = sns.heatmap(array_confusion_matrix, annot=True, fmt=".5f")
 g.set_xticklabels(classifiers, rotation = 45)
 g.set_yticklabels(methods, rotation = 45)
+plt.show()
+
+
+
