@@ -22,6 +22,7 @@ import random
 import numpy as np
 import seaborn as sns
 from functions import *
+import scipy.stats
 
 def whole_process(df, df_test, continuous_variables, target_variable, which_dataset, how_to_bin, nr_bins):
     
@@ -143,10 +144,13 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
 # how_many_rows_test = 10000
 
 
-# # e1 = [0,0]
-# # e2 = [1,1]
+# # e1 = np.array([0,0])
+# # e2 = np.array([1,1])
 # # std1 = np.array(([1,0],[0,1]))
 # # std2 =  np.array(([1,0],[0,1]))
+# # delta = np.sqrt(np.transpose(e1-e2) @ np.linalg.inv(std1) @ (e1-e2))
+# # misslcassification_rate = scipy.stats.norm(0, 1).pdf(- 0.5 * delta)
+# # print('Misclassification Rate: ' +str(np.round(misslcassification_rate * 100, 3))+'%')
 
 
 # # testing_data, belonging_classes = generating_test_data(1, how_many_rows, e1, std1,e2, std2)

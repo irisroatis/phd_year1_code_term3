@@ -50,6 +50,7 @@ def create_bins(data, data_test, how_many_bins, how_to_bin):
 
         bins_right = [start]
         current_right = 1.0 * start
+
         while current_right  < ma:
             current_right += bin_size
             bins_right.append(current_right)
@@ -136,13 +137,13 @@ def calc_conf_matrix(X_train,y_train,X_test, y_test,classifier):
     if classifier == 'logistic':
         model = LogisticRegression(penalty = 'none')  
     elif classifier == 'kNN':
-        model = KNeighborsClassifier()  
+        model = KNeighborsClassifier(n_neighbors = 15)  
     elif classifier == 'dec_tree':
         model = DecisionTreeClassifier()
     elif classifier == 'rand_for':
-        model = RandomForestClassifier()
+        model = RandomForestClassifier(n_estimators = 500)
     elif  classifier == 'grad_boost':
-        model = GradientBoostingClassifier()
+        model = GradientBoostingClassifier(learning_rate = 0.01)
     elif classifier == 'naive':
         model= GaussianNB()
     else:

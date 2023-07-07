@@ -64,8 +64,15 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_effect =  dataset_to_Xandy(effect_df, target_variable, only_X = True)
     X_effect_test =  dataset_to_Xandy(effect_df_test, target_variable, only_X = True)
     
+    ##### the WOE encoded dataset 
+    encoder = ce.woe.WOEEncoder(cols=categorical_variables,verbose=False)
+    woe_df = encoder.fit_transform(df, df[target_variable])
+    woe_df_test = encoder.transform(df_test)
+    X_woe =  dataset_to_Xandy(woe_df, target_variable, only_X = True)
+    X_woe_test =  dataset_to_Xandy(woe_df_test, target_variable, only_X = True)
     
-    ##### the target encoded dataset (after binned)
+
+    ##### the target encoded dataset 
     
     target_df = df.copy()
     target_df_test = df_test.copy()
@@ -79,7 +86,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_target =  dataset_to_Xandy(target_df, target_variable, only_X = True)
     X_target_test =  dataset_to_Xandy(target_df_test, target_variable, only_X = True)
     
-    ##### the GLMM encoded dataset (after binned)
+    ##### the GLMM encoded dataset 
     encoder = ce.glmm.GLMMEncoder(cols=categorical_variables,verbose=False)
     glmm_df = encoder.fit_transform(df, df[target_variable])
     glmm_df_test = encoder.transform(df_test)
@@ -87,12 +94,23 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_glmm_test =  dataset_to_Xandy(glmm_df_test, target_variable, only_X = True)
     
     
-    ##### the GLMM encoded dataset (after binned)
+
+    ##### the leave-one-out encoded dataset 
     encoder = ce.leave_one_out.LeaveOneOutEncoder(cols=categorical_variables,verbose=False)
     leave_df = encoder.fit_transform(df, df[target_variable])
     leave_df_test = encoder.transform(df_test)
     X_leave=  dataset_to_Xandy(leave_df, target_variable, only_X = True)
     X_leave_test =  dataset_to_Xandy(leave_df_test, target_variable, only_X = True)
+    
+        
+    ##### the CatBoost encoded dataset 
+    encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
+    cat_df = encoder.fit_transform(df, df[target_variable])
+    cat_df_test = encoder.transform(df_test)
+    X_cat=  dataset_to_Xandy(cat_df, target_variable, only_X = True)
+    X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
+    
+    
     
     
     confusion_matrix = []
@@ -116,12 +134,16 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
                 auc = calc_conf_matrix(X_onehot,y_train,X_onehot_test,y_test, classifier)
             elif method == 'effect':
                 auc = calc_conf_matrix(X_effect,y_train,X_effect_test,y_test, classifier)
+            elif method == 'woe':
+                auc = calc_conf_matrix(X_woe,y_train,X_woe_test,y_test, classifier)
             elif method == 'target':
                 auc = calc_conf_matrix(X_target,y_train,X_target_test,y_test, classifier)
             elif method == 'glmm':
                 auc = calc_conf_matrix(X_glmm,y_train,X_glmm_test,y_test, classifier)
             elif method == 'leave':
                 auc = calc_conf_matrix(X_leave,y_train,X_leave_test,y_test, classifier)
+            elif method == 'catboost':
+                auc = calc_conf_matrix(X_cat,y_train,X_cat_test,y_test, classifier)
             
             this.append(np.round(auc,3))
             
@@ -131,20 +153,21 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     # plot_boxplots_confusion(confusion_matrix, 'accuracy', which_dataset, classifier, how_to_bin, nr_bins)
 
 
-# methods = ['remove_cat','simple','onehot','target','effect', 'glmm','leave']
-methods = ['simple','onehot','target','effect', 'glmm','leave']
+
+# methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
+methods = ['remove_cat','simple','onehot','effect','target','woe','glmm','leave','catboost']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
 
 
 ########################################################################
 ######### HEART DATASET    
 
-# which_dataset = 'Heart Ilness'
-# df = pd.read_csv('heart.csv')
-# categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
-# target_variable = 'target' # Making sure the name of the target variable is known
-# continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
-# binary_variables = ['sex','fbs','exang']
+which_dataset = 'Heart Ilness'
+df = pd.read_csv('heart.csv')
+categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
+target_variable = 'target' # Making sure the name of the target variable is known
+continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
+binary_variables = ['sex','fbs','exang']
 
 # df.head()
 #########################################################################
@@ -154,9 +177,8 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
 # df = pd.read_csv('churn.csv')
 # categorical_variables = ['state','area_code','number_customer_service_calls'] # Putting in this all the categorical columns
 # target_variable = 'class' # Making sure the name of the target variable is known
-# # continuous_variables = ['international_plan','voice_mail_plan','chol','thalach','oldpeak']
 # binary_variables = ['international_plan','voice_mail_plan']
-
+# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
 
 #########################################################################
 ######### AMAZON
@@ -171,13 +193,25 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
 #########################################################################
 ######### MUSHROOM
 
-which_dataset = 'Mushroom'
-colnames = ['target','cap_shape','cap_surface','cap_color','bruises','odor','gill_attachment','gill_spacing','gill_size','gill_colour','stalk_shape','stalk_root','stalk_sur_ab_ring','stalk_sur_bw_ring','stalk_col_ab_ring','stalk_col_bw_ring','veil_type','veil_colour','ring_number','ring_type','spore_print_colour','population','habitat']
-df = pd.read_csv('mushrooms.data', names = colnames)
-target_variable = 'target' # Making sure the name of the target variable is known
-categorical_variables = colnames
-continuous_variables = []
-df[target_variable] = df[target_variable].replace(['e', 'p'], [1, 0])
+# which_dataset = 'Mushroom'
+# colnames = ['target','cap_shape','cap_surface','cap_color','bruises','odor','gill_attachment','gill_spacing','gill_size','gill_colour','stalk_shape','stalk_root','stalk_sur_ab_ring','stalk_sur_bw_ring','stalk_col_ab_ring','stalk_col_bw_ring','veil_type','veil_colour','ring_number','ring_type','spore_print_colour','population','habitat']
+# df = pd.read_csv('mushrooms.data', names = colnames)
+# target_variable = 'target' # Making sure the name of the target variable is known
+# categorical_variables = colnames
+# continuous_variables = []
+# df[target_variable] = df[target_variable].replace(['e', 'p'], [1, 0])
+
+
+#########################################################################
+######### CLICK PREDICTION ADDS
+
+# which_dataset = 'Click Prediction'
+# df = pd.read_csv('click_prediction.csv')
+# target_variable = 'click' # Making sure the name of the target variable is known
+# categorical_variables = ['impression', 'ad_id', 'advertiser_id', 'depth','position']
+# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+# df = pick_only_some(df, target_variable, 1000)
+# df = df.reset_index(drop=True)
 
 
 ##########################################################################
@@ -188,6 +222,10 @@ df[target_variable].value_counts().plot(kind='bar')
 plt.title('Test how many target 0 vs 1, dataset: '+ which_dataset)
 plt.show()
 
+for key in df.keys():
+    print(df[key].value_counts())
+    
+
 
 ##########################################################################
 
@@ -196,7 +234,7 @@ how_many_0s = len(df[df[target_variable] == 0])
 how_many_1s = len(df[df[target_variable] == 1])
 size = how_many_0s + how_many_1s
 
-how_many_cv = 10
+how_many_cv = 5
 
 conf_matrix_list = []
 
@@ -271,8 +309,16 @@ plt.figure(figsize=(10,7))
 g = sns.heatmap(score_matrix, annot=True, fmt=".5f")
 g.set_xticklabels(classifiers+['MEAN SCORE'], rotation = 45)
 g.set_yticklabels(methods, rotation = 45)
-plt.title('Dataset: ' + str(which_dataset) )
+plt.title('Plot scores, Dataset: ' + str(which_dataset) )
 plt.show()
 
 
+
+import seaborn as sns
+plt.figure(figsize=(10,7))
+g = sns.heatmap(array_confusion_matrix, annot=True, fmt=".5f")
+g.set_xticklabels(classifiers, rotation = 45)
+g.set_yticklabels(methods, rotation = 45)
+plt.title('Plot AUC, Dataset: ' + str(which_dataset) )
+plt.show()
 
