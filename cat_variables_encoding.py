@@ -22,6 +22,8 @@ import random
 import numpy as np
 import seaborn as sns
 from functions import *
+from scipy.stats import rankdata
+
 
 def whole_process_categorical(df, df_test, categorical_variables, continuous_variables, target_variable, which_dataset):
     
@@ -162,23 +164,24 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
 ########################################################################
 ######### HEART DATASET    
 
-which_dataset = 'Heart Ilness'
-df = pd.read_csv('heart.csv')
-categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
-target_variable = 'target' # Making sure the name of the target variable is known
-continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
-binary_variables = ['sex','fbs','exang']
+# which_dataset = 'Heart Ilness'
+# df = pd.read_csv('heart.csv')
+# categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
+# target_variable = 'target' # Making sure the name of the target variable is known
+# continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
+# binary_variables = ['sex','fbs','exang']
 
 # df.head()
 #########################################################################
 ######### CHURN
 
-# which_dataset = 'Churn'
-# df = pd.read_csv('churn.csv')
-# categorical_variables = ['state','area_code','number_customer_service_calls'] # Putting in this all the categorical columns
-# target_variable = 'class' # Making sure the name of the target variable is known
-# binary_variables = ['international_plan','voice_mail_plan']
-# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+which_dataset = 'Churn'
+df = pd.read_csv('churn.csv')
+categorical_variables = ['state','area_code','number_customer_service_calls'] # Putting in this all the categorical columns
+target_variable = 'class' # Making sure the name of the target variable is known
+binary_variables = ['international_plan','voice_mail_plan']
+continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+
 
 #########################################################################
 ######### AMAZON
@@ -314,7 +317,6 @@ plt.show()
 
 
 
-import seaborn as sns
 plt.figure(figsize=(10,7))
 g = sns.heatmap(array_confusion_matrix, annot=True, fmt=".5f")
 g.set_xticklabels(classifiers, rotation = 45)
@@ -322,3 +324,14 @@ g.set_yticklabels(methods, rotation = 45)
 plt.title('Plot AUC, Dataset: ' + str(which_dataset) )
 plt.show()
 
+ranking = np.zeros((len(methods), len(classifiers)+1))
+for col in range(ranking.shape[1]-1):
+    ranking[:,col] = rankdata(array_confusion_matrix[:,col])
+ranking[:,-1] = np.mean(ranking, axis = 1)
+
+plt.figure(figsize=(10,7))
+g = sns.heatmap(ranking, annot=True, fmt=".5f")
+g.set_xticklabels(classifiers+['MEAN RANK'], rotation = 45)
+g.set_yticklabels(methods, rotation = 45)
+plt.title('Plot ranks, Dataset: ' + str(which_dataset) )
+plt.show()
