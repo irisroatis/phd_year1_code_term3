@@ -23,6 +23,7 @@ import numpy as np
 import seaborn as sns
 from functions import *
 from scipy.stats import rankdata
+from kfold_code import *
 
 
 def whole_process_categorical(df, df_test, categorical_variables, continuous_variables, target_variable, which_dataset):
@@ -73,6 +74,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_woe =  dataset_to_Xandy(woe_df, target_variable, only_X = True)
     X_woe_test =  dataset_to_Xandy(woe_df_test, target_variable, only_X = True)
     
+    
 
     ##### the target encoded dataset 
     
@@ -113,8 +115,27 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
     
     
-    
-    
+    #### the 10-Fold Target Encoding
+    modified_df10, modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
+    X_target10 =  dataset_to_Xandy(modified_df10, target_variable, only_X = True)
+    X_target_test10 =  dataset_to_Xandy(modified_df_test10, target_variable, only_X = True)
+
+    #### the 5-Fold Target Encoding
+    modified_df5, modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='target')
+    X_target5 =  dataset_to_Xandy(modified_df5, target_variable, only_X = True)
+    X_target_test5 =  dataset_to_Xandy(modified_df_test5, target_variable, only_X = True)
+
+
+    #### the 10-Fold GLMM Encoding
+    glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='glmm')
+    X_glmm10 =  dataset_to_Xandy(glmm_modified_df10, target_variable, only_X = True)
+    X_glmm_test10 =  dataset_to_Xandy(glmm_modified_df_test10, target_variable, only_X = True)
+
+    #### the 5-Fold GLMM Encoding
+    glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='glmm')
+    X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
+    X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
+
     confusion_matrix = []
     
 
@@ -146,7 +167,15 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
                 auc = calc_conf_matrix(X_leave,y_train,X_leave_test,y_test, classifier)
             elif method == 'catboost':
                 auc = calc_conf_matrix(X_cat,y_train,X_cat_test,y_test, classifier)
-            
+            elif method =='target10fold':
+                auc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
+            elif method == 'target5fold':
+                auc = calc_conf_matrix(X_target5,y_train,X_target_test5,y_test, classifier)
+            elif method == 'glmm5fold':
+                auc = calc_conf_matrix(X_glmm5,y_train,X_glmm_test5,y_test, classifier)
+            elif method == 'glmm10fold':
+                auc = calc_conf_matrix(X_glmm10,y_train,X_glmm_test10,y_test, classifier)
+ 
             this.append(np.round(auc,3))
             
         confusion_matrix.append(this)
@@ -157,30 +186,30 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 
 # methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
-methods = ['remove_cat','simple','onehot','effect','target','woe','glmm','leave','catboost']
+methods = ['remove_cat','simple','onehot','effect','target','woe','glmm','leave','catboost','target5fold','target10fold','glmm5fold','glmm10fold']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
 
 
 ########################################################################
 ######### HEART DATASET    
 
-# which_dataset = 'Heart Ilness'
-# df = pd.read_csv('heart.csv')
-# categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
-# target_variable = 'target' # Making sure the name of the target variable is known
-# continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
-# binary_variables = ['sex','fbs','exang']
+which_dataset = 'Heart Ilness'
+df = pd.read_csv('heart.csv')
+categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
+target_variable = 'target' # Making sure the name of the target variable is known
+continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
+binary_variables = ['sex','fbs','exang']
 
 # df.head()
 #########################################################################
 ######### CHURN
 
-which_dataset = 'Churn'
-df = pd.read_csv('churn.csv')
-categorical_variables = ['state','area_code','number_customer_service_calls'] # Putting in this all the categorical columns
-target_variable = 'class' # Making sure the name of the target variable is known
-binary_variables = ['international_plan','voice_mail_plan']
-continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+# which_dataset = 'Churn'
+# df = pd.read_csv('churn.csv')
+# categorical_variables = ['state','area_code','number_customer_service_calls'] # Putting in this all the categorical columns
+# target_variable = 'class' # Making sure the name of the target variable is known
+# binary_variables = ['international_plan','voice_mail_plan']
+# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
 
 
 #########################################################################
@@ -292,17 +321,17 @@ from prettytable import PrettyTable
 # Specify the Column Names while initializing the Table
 myTable = PrettyTable([which_dataset]+classifiers+['MEAN SCORE'])
 
-colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray']
+colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered']
 
 plt.figure(figsize=(10,7))
 for method_index in range(len(methods)):
     myTable.add_row([methods[method_index]]+ list(np.round(score_matrix[method_index,:],5)))
-    plt.plot(np.arange(method_index,78,13),array_confusion_matrix[method_index,:],'.',color = colours[method_index], label = str(methods[method_index]))
-    plt.plot(np.arange(method_index,78,13),mi_array[method_index,:],'_', color = colours[method_index])
-    plt.plot(np.arange(method_index,78,13),ma_array[method_index,:],'_', color = colours[method_index])
+    plt.plot(np.arange(method_index,102,17),array_confusion_matrix[method_index,:],'.',color = colours[method_index], label = str(methods[method_index]))
+    plt.plot(np.arange(method_index,102,17),mi_array[method_index,:],'_', color = colours[method_index])
+    plt.plot(np.arange(method_index,102,17),ma_array[method_index,:],'_', color = colours[method_index])
 print(myTable)
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.xticks(np.arange(4,78,13),labels = classifiers)
+plt.xticks(np.arange(4,102,17),labels = classifiers)
 plt.title('Dataset: ' + str(which_dataset))
 plt.show()
 
