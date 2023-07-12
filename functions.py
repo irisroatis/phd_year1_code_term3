@@ -75,7 +75,7 @@ def put_in_bins(data, bins):
     return new_data
  
 
-def target_encoding(feature, target,df):
+def target_encoding(feature, target, df):
     dictionary_target_encoding = {}
     categories = df[feature].unique()
     changed_df = df.copy()
