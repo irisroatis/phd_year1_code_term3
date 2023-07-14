@@ -146,6 +146,8 @@ def calc_conf_matrix(X_train,y_train,X_test, y_test,classifier):
         model = GradientBoostingClassifier(learning_rate = 0.01)
     elif classifier == 'naive':
         model= GaussianNB()
+    elif classifier == 'lasso':
+        model = LogisticRegression(penalty = 'l1', C = 1/5, solver = 'saga') 
     else:
         assert('Classifier unknown')
     

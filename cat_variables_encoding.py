@@ -187,18 +187,18 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 # methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
 methods = ['remove_cat','simple','onehot','effect','target','woe','glmm','leave','catboost','target5fold','target10fold','glmm5fold','glmm10fold']
-classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive']
+classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
 
 
 ########################################################################
 ######### HEART DATASET    
 
-which_dataset = 'Heart Ilness'
-df = pd.read_csv('heart.csv')
-categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
-target_variable = 'target' # Making sure the name of the target variable is known
-continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
-binary_variables = ['sex','fbs','exang']
+# which_dataset = 'Heart Ilness'
+# df = pd.read_csv('heart.csv')
+# categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
+# target_variable = 'target' # Making sure the name of the target variable is known
+# continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
+# binary_variables = ['sex','fbs','exang']
 
 # df.head()
 #########################################################################
@@ -237,13 +237,13 @@ binary_variables = ['sex','fbs','exang']
 #########################################################################
 ######### CLICK PREDICTION ADDS
 
-# which_dataset = 'Click Prediction'
-# df = pd.read_csv('click_prediction.csv')
-# target_variable = 'click' # Making sure the name of the target variable is known
-# categorical_variables = ['impression', 'ad_id', 'advertiser_id', 'depth','position']
-# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
-# df = pick_only_some(df, target_variable, 1000)
-# df = df.reset_index(drop=True)
+which_dataset = 'Click Prediction'
+df = pd.read_csv('click_prediction.csv')
+target_variable = 'click' # Making sure the name of the target variable is known
+categorical_variables = ['url_hash', 'ad_id', 'advertiser_id', 'query_id', 'keyword_id', 'title_id', 'description_id', 'user_id']
+continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+df = pick_only_some(df, target_variable, 1000)
+df = df.reset_index(drop=True)
 
 
 ##########################################################################
@@ -323,15 +323,20 @@ myTable = PrettyTable([which_dataset]+classifiers+['MEAN SCORE'])
 
 colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered']
 
-plt.figure(figsize=(10,7))
+
+how_many_methods = len(methods)
+how_many_methodsplus2 = how_many_methods + 5
+how_many_classifiers = len(classifiers)
+
+plt.figure(figsize=(12,7))
 for method_index in range(len(methods)):
     myTable.add_row([methods[method_index]]+ list(np.round(score_matrix[method_index,:],5)))
-    plt.plot(np.arange(method_index,102,17),array_confusion_matrix[method_index,:],'.',color = colours[method_index], label = str(methods[method_index]))
-    plt.plot(np.arange(method_index,102,17),mi_array[method_index,:],'_', color = colours[method_index])
-    plt.plot(np.arange(method_index,102,17),ma_array[method_index,:],'_', color = colours[method_index])
+    plt.plot(np.arange(method_index,how_many_methodsplus2 * how_many_classifiers,how_many_methodsplus2),array_confusion_matrix[method_index,:],'.',color = colours[method_index], label = str(methods[method_index]))
+    plt.plot(np.arange(method_index,how_many_methodsplus2 * how_many_classifiers,how_many_methodsplus2),mi_array[method_index,:],'_', color = colours[method_index])
+    plt.plot(np.arange(method_index,how_many_methodsplus2 * how_many_classifiers,how_many_methodsplus2),ma_array[method_index,:],'_', color = colours[method_index])
 print(myTable)
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.xticks(np.arange(4,102,17),labels = classifiers)
+plt.xticks(np.arange(4,how_many_methodsplus2 * how_many_classifiers,how_many_methodsplus2),labels = classifiers)
 plt.title('Dataset: ' + str(which_dataset))
 plt.show()
 
