@@ -201,8 +201,8 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lass
 # binary_variables = ['sex','fbs','exang']
 
 # df.head()
-#########################################################################
-######### CHURN
+# #########################################################################
+# ######### CHURN
 
 # which_dataset = 'Churn'
 # df = pd.read_csv('churn.csv')
@@ -237,13 +237,30 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lass
 #########################################################################
 ######### CLICK PREDICTION ADDS
 
-which_dataset = 'Click Prediction'
-df = pd.read_csv('click_prediction.csv')
-target_variable = 'click' # Making sure the name of the target variable is known
-categorical_variables = ['url_hash', 'ad_id', 'advertiser_id', 'query_id', 'keyword_id', 'title_id', 'description_id', 'user_id']
-continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
-df = pick_only_some(df, target_variable, 1000)
-df = df.reset_index(drop=True)
+# which_dataset = 'Click Prediction'
+# df = pd.read_csv('click_prediction.csv')
+# target_variable = 'click' # Making sure the name of the target variable is known
+# categorical_variables = ['url_hash', 'ad_id', 'advertiser_id', 'query_id', 'keyword_id', 'title_id', 'description_id', 'user_id']
+# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+# df = pick_only_some(df, target_variable, 1000)
+# df = df.reset_index(drop=True)
+
+
+#########################################################################
+######## Internet
+
+# which_dataset = 'Internet Usage'
+# df = pd.read_csv('kdd_internet_usage.csv')
+# target_variable = 'Who_Pays_for_Access_Work' # Making sure the name of the target variable is known
+# categorical_variables = ['Actual_Time', 'Community_Building', 'Country', 'Education_Attainment', 'Falsification_of_Information', 'Major_Geographical_Location', 'Major_Occupation', 'Marital_Status','Most_Import_Issue_Facing_the_Internet','Opinions_on_Censorship','Primary_Computing_Platform','Primary_Language','Primary_Place_of_WWW_Access','Race','Registered_to_Vote',
+#                           'Sexual_Preference','Web_Ordering','Web_Page_Creation','Age']
+# continuous_variables = []
+# df['Web_Ordering'] = df['Web_Ordering'].replace(['Yes', 'No'], [1, 0])
+# df['Registered_to_Vote'] = df['Registered_to_Vote'].replace(['Yes', 'No'], [1, 0])
+
+# binary_variables = list(set(df.keys()) - set(continuous_variables + categorical_variables + [target_variable]))
+# df = pick_only_some(df, target_variable, 1000)
+# df = df.reset_index(drop=True)
 
 
 ##########################################################################
@@ -271,6 +288,7 @@ how_many_cv = 5
 conf_matrix_list = []
 
 array_confusion_matrix = np.zeros((len(methods),len(classifiers)))
+
 for index in range(how_many_cv):
 
     randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
