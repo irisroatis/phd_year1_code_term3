@@ -28,12 +28,57 @@ from kfold_code import *
 #########################################################################
 ######### CHURN
 
-which_dataset = 'Churn'
-df = pd.read_csv('churn.csv')
-categorical_variables = ['state','area_code','number_customer_service_calls','phone_number'] # Putting in this all the categorical columns
-target_variable = 'class' # Making sure the name of the target variable is known
-binary_variables = ['international_plan','voice_mail_plan']
-continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+# which_dataset = 'Churn'
+# df = pd.read_csv('churn.csv')
+# categorical_variables = ['state','area_code','number_customer_service_calls','phone_number'] # Putting in this all the categorical columns
+# target_variable = 'class' # Making sure the name of the target variable is known
+# binary_variables = ['international_plan','voice_mail_plan']
+# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+# ########################################################################
+######### HEART DATASET    
+
+# which_dataset = 'Heart Ilness'
+# df = pd.read_csv('heart.csv')
+# categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
+# target_variable = 'target' # Making sure the name of the target variable is known
+# continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
+# binary_variables = ['sex','fbs','exang']
+
+
+
+
+which_dataset = 'Car Insurance'
+df = pd.read_csv('car_insurance.csv')
+df = df.drop('policy_id',axis = 1)
+categorical_variables = ['area_cluster','make', 'segment','model', 'fuel_type','max_torque','max_power','engine_type','airbags','steering_type','ncap_rating'] # Putting in this all the categorical columns
+target_variable = 'is_claim' # Making sure the name of the target variable is known
+
+binary_cols = ['gear_box','is_esc','is_adjustable_steering','is_tpms',
+                'is_parking_sensors','is_parking_camera','rear_brakes_type',
+                'cylinder','transmission_type','is_front_fog_lights'
+                ,'is_rear_window_wiper','is_rear_window_washer'
+                ,'is_rear_window_defogger', 'is_brake_assist', 'is_power_door_locks',
+                'is_central_locking','is_power_steering','is_driver_seat_height_adjustable',
+                'is_day_night_rear_view_mirror','is_ecw','is_speed_alert']
+
+
+continuous_variables = ['policy_tenure', 'age_of_car', 'age_of_policyholder',
+        'population_density', 'displacement','turning_radius',
+        'length', 'width', 'height', 'gross_weight']
+
+df[binary_cols] = df[binary_cols].replace(['Yes', 'No'], [1, 0])
+df['rear_brakes_type'] = df['rear_brakes_type'].replace(['Drum', 'Disc'], [1, 0])
+df['transmission_type'] = df['transmission_type'].replace(['Automatic', 'Manual'], [1, 0])
+
+df = pick_only_some(df, target_variable, 1000)
+df = df.reset_index(drop=True)
+
+
+
+
+
+
+
 
 how_many_0s = len(df[df[target_variable] == 0])
 how_many_1s = len(df[df[target_variable] == 1])
@@ -153,12 +198,7 @@ glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df_train, df
 X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
 X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
 
-
-
-
-multiple_encoders = df_train.copy()
-
-
+plt.hist(X_glmm5['area_cluster'],bins = 50)
 
 
 

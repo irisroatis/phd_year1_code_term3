@@ -263,6 +263,43 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lass
 # df = df.reset_index(drop=True)
 
 
+
+#########################################################################
+######## Car Insurance
+
+which_dataset = 'Car Insurance'
+df = pd.read_csv('car_insurance.csv')
+df = df.drop('policy_id',axis = 1)
+categorical_variables = ['area_cluster','make', 'segment','model', 'fuel_type','max_torque','max_power','engine_type','airbags','steering_type','ncap_rating'] # Putting in this all the categorical columns
+target_variable = 'is_claim' # Making sure the name of the target variable is known
+
+binary_cols = ['gear_box','is_esc','is_adjustable_steering','is_tpms',
+                'is_parking_sensors','is_parking_camera','rear_brakes_type',
+                'cylinder','transmission_type','is_front_fog_lights'
+                ,'is_rear_window_wiper','is_rear_window_washer'
+                ,'is_rear_window_defogger', 'is_brake_assist', 'is_power_door_locks',
+                'is_central_locking','is_power_steering','is_driver_seat_height_adjustable',
+                'is_day_night_rear_view_mirror','is_ecw','is_speed_alert']
+
+
+continuous_variables = ['policy_tenure', 'age_of_car', 'age_of_policyholder',
+        'population_density', 'displacement','turning_radius',
+        'length', 'width', 'height', 'gross_weight']
+
+df[binary_cols] = df[binary_cols].replace(['Yes', 'No'], [1, 0])
+df['rear_brakes_type'] = df['rear_brakes_type'].replace(['Drum', 'Disc'], [1, 0])
+df['transmission_type'] = df['transmission_type'].replace(['Automatic', 'Manual'], [1, 0])
+
+df = pick_only_some(df, target_variable, 1000)
+df = df.reset_index(drop=True)
+
+
+
+
+
+
+
+
 ##########################################################################
 
 
@@ -293,7 +330,7 @@ for index in range(how_many_cv):
 
     randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
     not_in_randomlist = list(set(range(0,size)) - set(randomlist))
-    
+
     
     df_test = df.iloc[not_in_randomlist,:]
     df_train = df.iloc[randomlist,:]
