@@ -24,6 +24,7 @@ import seaborn as sns
 from functions import *
 from scipy.stats import rankdata
 from kfold_code import *
+from sklearn import tree
 
 #########################################################################
 ######### CHURN
@@ -47,36 +48,40 @@ from kfold_code import *
 
 
 
-which_dataset = 'Car Insurance'
-df = pd.read_csv('car_insurance.csv')
-df = df.drop('policy_id',axis = 1)
-categorical_variables = ['area_cluster','make', 'segment','model', 'fuel_type','max_torque','max_power','engine_type','airbags','steering_type','ncap_rating'] # Putting in this all the categorical columns
-target_variable = 'is_claim' # Making sure the name of the target variable is known
+# which_dataset = 'Car Insurance'
+# df = pd.read_csv('car_insurance.csv')
+# df = df.drop('policy_id',axis = 1)
+# categorical_variables = ['area_cluster','make', 'segment','model', 'fuel_type','max_torque','max_power','engine_type','airbags','steering_type','ncap_rating'] # Putting in this all the categorical columns
+# target_variable = 'is_claim' # Making sure the name of the target variable is known
 
-binary_cols = ['gear_box','is_esc','is_adjustable_steering','is_tpms',
-                'is_parking_sensors','is_parking_camera','rear_brakes_type',
-                'cylinder','transmission_type','is_front_fog_lights'
-                ,'is_rear_window_wiper','is_rear_window_washer'
-                ,'is_rear_window_defogger', 'is_brake_assist', 'is_power_door_locks',
-                'is_central_locking','is_power_steering','is_driver_seat_height_adjustable',
-                'is_day_night_rear_view_mirror','is_ecw','is_speed_alert']
-
-
-continuous_variables = ['policy_tenure', 'age_of_car', 'age_of_policyholder',
-        'population_density', 'displacement','turning_radius',
-        'length', 'width', 'height', 'gross_weight']
-
-df[binary_cols] = df[binary_cols].replace(['Yes', 'No'], [1, 0])
-df['rear_brakes_type'] = df['rear_brakes_type'].replace(['Drum', 'Disc'], [1, 0])
-df['transmission_type'] = df['transmission_type'].replace(['Automatic', 'Manual'], [1, 0])
-
-df = pick_only_some(df, target_variable, 1000)
-df = df.reset_index(drop=True)
+# binary_cols = ['gear_box','is_esc','is_adjustable_steering','is_tpms',
+#                 'is_parking_sensors','is_parking_camera','rear_brakes_type',
+#                 'cylinder','transmission_type','is_front_fog_lights'
+#                 ,'is_rear_window_wiper','is_rear_window_washer'
+#                 ,'is_rear_window_defogger', 'is_brake_assist', 'is_power_door_locks',
+#                 'is_central_locking','is_power_steering','is_driver_seat_height_adjustable',
+#                 'is_day_night_rear_view_mirror','is_ecw','is_speed_alert']
 
 
+# continuous_variables = ['policy_tenure', 'age_of_car', 'age_of_policyholder',
+#         'population_density', 'displacement','turning_radius',
+#         'length', 'width', 'height', 'gross_weight']
+
+# df[binary_cols] = df[binary_cols].replace(['Yes', 'No'], [1, 0])
+# df['rear_brakes_type'] = df['rear_brakes_type'].replace(['Drum', 'Disc'], [1, 0])
+# df['transmission_type'] = df['transmission_type'].replace(['Automatic', 'Manual'], [1, 0])
+
+# df = pick_only_some(df, target_variable, 1000)
+# df = df.reset_index(drop=True)
 
 
+##### SIMULATED DATASET
 
+which_dataset = 'Simulated Data'
+df = pd.read_csv('simulate_categories.csv')
+categorical_variables = ['Feature_3'] 
+target_variable = 'target'
+continuous_variables = ['Feature_1','Feature_2']
 
 
 
@@ -198,10 +203,104 @@ glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df_train, df
 X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
 X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
 
-plt.hist(X_glmm5['area_cluster'],bins = 50)
+
+# which_category = 'area_cluster'
+# which_category = 'cp'
+which_category = 'Feature_3'
+
+
+fig, axs = plt.subplots(3, sharex=True, sharey=True)
+fig.suptitle('Different number of folds, GLMM (no folds, 5, 10) and WOE')
+axs[0].hist(X_glmm[which_category],bins = 50)
+axs[1].hist(X_glmm5[which_category],bins = 50)
+axs[2].hist(X_glmm10[which_category],bins = 50)
+plt.show()
+
+fig, axs = plt.subplots(3, sharex=True, sharey=True)
+fig.suptitle('Different number of folds, target')
+axs[0].hist(X_target[which_category],bins = 50)
+axs[1].hist(X_target5[which_category],bins = 50)
+axs[2].hist(X_target10[which_category],bins = 50)
+plt.show()
+
+fig, axs = plt.subplots(2, sharex=True, sharey=True)
+fig.suptitle('Leave-One-Out and Catboost encoders')
+axs[0].hist(X_leave[which_category],bins = 50)
+axs[1].hist(X_cat[which_category],bins = 50)
+plt.show()
+
+
+plt.hist(X_simple[which_category],bins = 50)
+plt.title('Simple encoding')
+plt.show()
+
+plt.hist(X_woe[which_category],bins = 50)
+plt.title('WOE encoding')
+plt.show()
+
+# X_multiple_encoding = X_target.copy()
+# X_multiple_encoding = X_multiple_encoding.rename({'area_cluster': 'area_cluster_target'}, axis='columns')
+# X_multiple_encoding['area_cluster_target_5'] = X_target5['area_cluster']
+# X_multiple_encoding['area_cluster_target_10'] = X_target10['area_cluster']
+# X_multiple_encoding['area_cluster_glmm'] = X_glmm['area_cluster']
+# X_multiple_encoding['area_cluster_glmm_5'] = X_glmm5['area_cluster']
+# X_multiple_encoding['area_cluster_glmm_10'] = X_glmm10['area_cluster']
+# model = DecisionTreeClassifier()
+# model.fit(X_multiple_encoding, y_train)
+
+# fig = plt.figure(figsize=(25,20))
+# _ = tree.plot_tree(model,
+#                    feature_names=X_multiple_encoding.keys(), 
+#                    class_names='target',
+#                    filled=True)
 
 
 
+
+X_multiple_encoding = X_target.copy()
+X_multiple_encoding = X_multiple_encoding.rename({which_category: which_category+'_target'}, axis='columns')
+X_multiple_encoding[which_category+'_target_5'] = X_target5[which_category]
+X_multiple_encoding[which_category+'_target_10'] = X_target10[which_category]
+X_multiple_encoding[which_category+'_glmm'] = X_glmm[which_category]
+X_multiple_encoding[which_category+'_glmm5'] = X_glmm5[which_category]
+X_multiple_encoding[which_category+'_glmm10'] = X_glmm10[which_category]
+
+
+X_multiple_encoding_test = X_target_test.copy()
+X_multiple_encoding_test = X_multiple_encoding_test.rename({which_category: which_category+'_target'}, axis='columns')
+X_multiple_encoding_test[which_category+'_target_5'] = X_target_test5[which_category]
+X_multiple_encoding_test[which_category+'_target_10'] = X_target_test10[which_category]
+X_multiple_encoding_test[which_category+'_glmm'] = X_glmm_test[which_category]
+X_multiple_encoding_test[which_category+'_glmm5'] = X_glmm_test5[which_category]
+X_multiple_encoding_test[which_category+'_glmm10'] = X_glmm_test10[which_category]
+
+model_ensemble = DecisionTreeClassifier(max_depth=5)
+model_ensemble.fit(X_multiple_encoding, y_train)
+y_predicted = model_ensemble.predict(X_multiple_encoding_test)
+fpr, tpr, _ = metrics.roc_curve(y_test, y_predicted)
+area_roc_ensemble = metrics.auc(fpr, tpr)
+
+
+model_target = DecisionTreeClassifier(max_depth=5)
+model_target.fit(X_target, y_train)
+y_predicted = model_target.predict(X_target_test)
+fpr, tpr, _ = metrics.roc_curve(y_test, y_predicted)
+area_roc_target = metrics.auc(fpr, tpr)
+
+
+
+fig = plt.figure(figsize=(50,40))
+_ = tree.plot_tree(model_ensemble,
+                   feature_names=X_multiple_encoding.keys(), 
+                   class_names='target',
+                   filled=True)
+
+
+fig = plt.figure(figsize=(50,40))
+_ = tree.plot_tree(model_target,
+                   feature_names=X_multiple_encoding.keys(), 
+                   class_names='target',
+                   filled=True)
 
 
 

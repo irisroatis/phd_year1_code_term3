@@ -87,7 +87,7 @@ def target_encoding(feature, target, df):
     return changed_df, dictionary_target_encoding
    
 def generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2, 
-                         sigma2, plot_classes = False):
+                         sigma2):
 
     dim = len(mu1)
     testing_data=[]
