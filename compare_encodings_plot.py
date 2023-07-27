@@ -74,8 +74,7 @@ from sklearn import tree
 # df = pick_only_some(df, target_variable, 1000)
 # df = df.reset_index(drop=True)
 
-
-##### SIMULATED DATASET
+#### SIMULATED DATASET
 
 which_dataset = 'Simulated Data'
 df = pd.read_csv('simulate_categories.csv')
@@ -85,128 +84,161 @@ continuous_variables = ['Feature_1','Feature_2']
 
 
 
+# #### ESA example
+# list_cat = ['A','C','B','A','B','A']
+# list_target = np.array([1,0,1,1,0,0])
+# df = pd.DataFrame(list_target,columns = ['target'])
+# df['Feature'] = list_cat
+# categorical_variables=['Feature']
+# target_variable = 'target'
+
+unique_cat = list(set(df['Feature_3']))
+cat_and_encoded = pd.DataFrame(unique_cat, columns = ['Feature'])
+cat_and_encoded['target'] = np.nan
+
+
 how_many_0s = len(df[df[target_variable] == 0])
 how_many_1s = len(df[df[target_variable] == 1])
 size = how_many_0s + how_many_1s
 
 
-randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
-not_in_randomlist = list(set(range(0,size)) - set(randomlist))
+# randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
+# not_in_randomlist = list(set(range(0,size)) - set(randomlist))
 
-df_test = df.iloc[not_in_randomlist,:]
-df_train = df.iloc[randomlist,:]
+# df_test = df.iloc[not_in_randomlist,:]
+# df_train = df.iloc[randomlist,:]
 
+df_train = df
+# how_many_rows_train = df.shape[0]
+# how_many_rows_test = df_test.shape[0]
 
-how_many_rows_train = df.shape[0]
-how_many_rows_test = df_test.shape[0]
+# # We standardise original dataset
+# for cont_col in continuous_variables:
+#     df_train[cont_col] = standardise(df_train[cont_col])
+#     df_test[cont_col] = standardise(df_test[cont_col])
 
-# We standardise original dataset
-for cont_col in continuous_variables:
-    df_train[cont_col] = standardise(df_train[cont_col])
-    df_test[cont_col] = standardise(df_test[cont_col])
-
-df_wout_cat = df_train.drop(columns=categorical_variables)
-df_test_wout_cat = df_test.drop(columns=categorical_variables)
+# df_wout_cat = df_train.drop(columns=categorical_variables)
+# df_test_wout_cat = df_test.drop(columns=categorical_variables)
 
 X_train, y_train =  dataset_to_Xandy(df_train, target_variable, only_X = False) ###### the original dataset
-X_test, y_test =  dataset_to_Xandy(df_test, target_variable, only_X = False) ###### the original dataset
+# X_test, y_test =  dataset_to_Xandy(df_test, target_variable, only_X = False) ###### the original dataset
 
 
-X_nocat =  dataset_to_Xandy(df_wout_cat, target_variable, only_X = True)
-X_test_nocat =  dataset_to_Xandy(df_test_wout_cat, target_variable, only_X = True)
+# X_nocat =  dataset_to_Xandy(df_wout_cat, target_variable, only_X = True)
+# X_test_nocat =  dataset_to_Xandy(df_test_wout_cat, target_variable, only_X = True)
 
 ##### the simple encoded dataset 
 labelencoder = ce.OrdinalEncoder(cols=categorical_variables)
 simple_df = labelencoder.fit_transform(df_train)
-simple_df_test =  labelencoder.transform(df_test)
+# simple_df_test =  labelencoder.transform(df_test)
 X_simple =  dataset_to_Xandy(simple_df, target_variable, only_X = True)
-X_simple_test=  dataset_to_Xandy(simple_df_test, target_variable, only_X = True)
+# X_simple_test=  dataset_to_Xandy(simple_df_test, target_variable, only_X = True)
+cat_and_encoded['simple'] = labelencoder.transform(cat_and_encoded)['Feature']
+
+
 
 ##### the one hot encoded dataset (after binned)
 encoder = ce.OneHotEncoder(cols=categorical_variables,use_cat_names=True)
 onehot_df = encoder.fit_transform(df_train)
-onehot_df_test = encoder.transform(df_test)
+# onehot_df_test = encoder.transform(df_test)
 X_onehot =  dataset_to_Xandy(onehot_df, target_variable, only_X = True)
-X_onehot_test =  dataset_to_Xandy(onehot_df_test, target_variable, only_X = True)
+# X_onehot_test =  dataset_to_Xandy(onehot_df_test, target_variable, only_X = True)
 
 ##### the effect encoded dataset (after binned)
 encoder = ce.sum_coding.SumEncoder(cols=categorical_variables,verbose=False)
 effect_df = encoder.fit_transform(df_train)
-effect_df_test = encoder.transform(df_test)
+# effect_df_test = encoder.transform(df_test)
 X_effect =  dataset_to_Xandy(effect_df, target_variable, only_X = True)
-X_effect_test =  dataset_to_Xandy(effect_df_test, target_variable, only_X = True)
+# X_effect_test =  dataset_to_Xandy(effect_df_test, target_variable, only_X = True)
 
 ##### the WOE encoded dataset 
 encoder = ce.woe.WOEEncoder(cols=categorical_variables,verbose=False)
 woe_df = encoder.fit_transform(df_train, df_train[target_variable])
-woe_df_test = encoder.transform(df_test)
+# woe_df_test = encoder.transform(df_test)
 X_woe =  dataset_to_Xandy(woe_df, target_variable, only_X = True)
-X_woe_test =  dataset_to_Xandy(woe_df_test, target_variable, only_X = True)
-
+# X_woe_test =  dataset_to_Xandy(woe_df_test, target_variable, only_X = True)
+cat_and_encoded['woe'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
 
 
 ##### the target encoded dataset 
 
 target_df = df_train.copy()
-target_df_test = df_test.copy()
+# target_df_test = df_test.copy()
 
 for col in categorical_variables:
     dict_target = {}
     target_df, dict_target =  target_encoding(col, target_variable, target_df)
-    target_df_test[col] = target_df_test[col].replace(list(dict_target.keys()), list(dict_target.values()))
+    # target_df_test[col] = target_df_test[col].replace(list(dict_target.keys()), list(dict_target.values()))
     
     
 X_target =  dataset_to_Xandy(target_df, target_variable, only_X = True)
-X_target_test =  dataset_to_Xandy(target_df_test, target_variable, only_X = True)
+# X_target_test =  dataset_to_Xandy(target_df_test, target_variable, only_X = True)
+
+
+#### the target weighted encoded dataset 
+encoder = ce.target_encoder.TargetEncoder(cols = categorical_variables, verbose=False)
+target_w_df = encoder.fit_transform(df_train, df_train[target_variable])
+encoder.set_output()
+# target_w_df_test = encoder.transform(df_test)
+X_target_w =  dataset_to_Xandy(target_w_df, target_variable, only_X = True)
+# X_target_w_test =  dataset_to_Xandy(target_w_df_test, target_variable, only_X = True)
+cat_and_encoded['target_encoded'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
+
 
 ##### the GLMM encoded dataset 
 encoder = ce.glmm.GLMMEncoder(cols=categorical_variables,verbose=False)
 glmm_df = encoder.fit_transform(df_train, df_train[target_variable])
-glmm_df_test = encoder.transform(df_test)
+# glmm_df_test = encoder.transform(df_test)
 X_glmm =  dataset_to_Xandy(glmm_df, target_variable, only_X = True)
-X_glmm_test =  dataset_to_Xandy(glmm_df_test, target_variable, only_X = True)
+# X_glmm_test =  dataset_to_Xandy(glmm_df_test, target_variable, only_X = True)
+cat_and_encoded['glmm']= encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
+
+
+
 
 ##### the leave-one-out encoded dataset 
 encoder = ce.leave_one_out.LeaveOneOutEncoder(cols=categorical_variables,verbose=False)
 leave_df = encoder.fit_transform(df_train, df_train[target_variable])
-leave_df_test = encoder.transform(df_test)
+# leave_df_test = encoder.transform(df_test)
 X_leave=  dataset_to_Xandy(leave_df, target_variable, only_X = True)
-X_leave_test =  dataset_to_Xandy(leave_df_test, target_variable, only_X = True)
+# X_leave_test =  dataset_to_Xandy(leave_df_test, target_variable, only_X = True)
+cat_and_encoded['leave'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
 
     
 ##### the CatBoost encoded dataset 
 encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
 cat_df = encoder.fit_transform(df_train, df_train[target_variable])
-cat_df_test = encoder.transform(df_test)
+# cat_df_test = encoder.transform(df_test)
 X_cat=  dataset_to_Xandy(cat_df, target_variable, only_X = True)
-X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
+# X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
+cat_and_encoded['catboost'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
 
 
-#### the 10-Fold Target Encoding
-modified_df10, modified_df_test10 = k_fold_target_encoding(df_train, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
-X_target10 =  dataset_to_Xandy(modified_df10, target_variable, only_X = True)
-X_target_test10 =  dataset_to_Xandy(modified_df_test10, target_variable, only_X = True)
+# #### the 10-Fold Target Encoding
+# modified_df10, modified_df_test10 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
+# X_target10 =  dataset_to_Xandy(modified_df10, target_variable, only_X = True)
+# X_target_test10 =  dataset_to_Xandy(modified_df_test10, target_variable, only_X = True)
 
 #### the 5-Fold Target Encoding
-modified_df5, modified_df_test5 = k_fold_target_encoding(df_train, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='target')
+modified_df5, modified_df_test5 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=5, which_encoder='target')
 X_target5 =  dataset_to_Xandy(modified_df5, target_variable, only_X = True)
 X_target_test5 =  dataset_to_Xandy(modified_df_test5, target_variable, only_X = True)
+cat_and_encoded['target_5']  = X_target_test5
 
-
-#### the 10-Fold GLMM Encoding
-glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df_train, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='glmm')
-X_glmm10 =  dataset_to_Xandy(glmm_modified_df10, target_variable, only_X = True)
-X_glmm_test10 =  dataset_to_Xandy(glmm_modified_df_test10, target_variable, only_X = True)
+# #### the 10-Fold GLMM Encoding
+# glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=10, which_encoder='glmm')
+# X_glmm10 =  dataset_to_Xandy(glmm_modified_df10, target_variable, only_X = True)
+# X_glmm_test10 =  dataset_to_Xandy(glmm_modified_df_test10, target_variable, only_X = True)
 
 #### the 5-Fold GLMM Encoding
-glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df_train, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='glmm')
+glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=5, which_encoder='glmm')
 X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
 X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
-
+cat_and_encoded['glmm_5']  = X_glmm_test5
 
 # which_category = 'area_cluster'
 # which_category = 'cp'
-which_category = 'Feature_3'
+which_category = 'Feature'
 
 
 fig, axs = plt.subplots(3, sharex=True, sharey=True)
