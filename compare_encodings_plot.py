@@ -84,6 +84,12 @@ continuous_variables = ['Feature_1','Feature_2']
 
 
 
+# which_category = 'area_cluster'
+# which_category = 'cp'
+which_category = 'Feature_3'
+
+
+
 # #### ESA example
 # list_cat = ['A','C','B','A','B','A']
 # list_target = np.array([1,0,1,1,0,0])
@@ -92,10 +98,12 @@ continuous_variables = ['Feature_1','Feature_2']
 # categorical_variables=['Feature']
 # target_variable = 'target'
 
-unique_cat = list(set(df['Feature_3']))
-cat_and_encoded = pd.DataFrame(unique_cat, columns = ['Feature'])
+unique_cat = list(set(df[which_category]))
+cat_and_encoded = pd.DataFrame(unique_cat, columns = [which_category])
 cat_and_encoded['target'] = np.nan
-
+cat_and_encoded['Feature_2'] = np.nan
+cat_and_encoded['Feature_1'] = np.nan
+intial_features = cat_and_encoded.keys()
 
 how_many_0s = len(df[df[target_variable] == 0])
 how_many_1s = len(df[df[target_variable] == 1])
@@ -109,6 +117,7 @@ size = how_many_0s + how_many_1s
 # df_train = df.iloc[randomlist,:]
 
 df_train = df
+
 # how_many_rows_train = df.shape[0]
 # how_many_rows_test = df_test.shape[0]
 
@@ -128,12 +137,12 @@ X_train, y_train =  dataset_to_Xandy(df_train, target_variable, only_X = False) 
 # X_test_nocat =  dataset_to_Xandy(df_test_wout_cat, target_variable, only_X = True)
 
 ##### the simple encoded dataset 
-labelencoder = ce.OrdinalEncoder(cols=categorical_variables)
-simple_df = labelencoder.fit_transform(df_train)
+encoder = ce.OrdinalEncoder(cols=categorical_variables)
+simple_df = encoder.fit_transform(df_train)
 # simple_df_test =  labelencoder.transform(df_test)
 X_simple =  dataset_to_Xandy(simple_df, target_variable, only_X = True)
 # X_simple_test=  dataset_to_Xandy(simple_df_test, target_variable, only_X = True)
-cat_and_encoded['simple'] = labelencoder.transform(cat_and_encoded)['Feature']
+cat_and_encoded['simple'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
 
 
 
@@ -157,23 +166,24 @@ woe_df = encoder.fit_transform(df_train, df_train[target_variable])
 # woe_df_test = encoder.transform(df_test)
 X_woe =  dataset_to_Xandy(woe_df, target_variable, only_X = True)
 # X_woe_test =  dataset_to_Xandy(woe_df_test, target_variable, only_X = True)
-cat_and_encoded['woe'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
+cat_and_encoded['woe'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
 
 
 ##### the target encoded dataset 
 
 target_df = df_train.copy()
+target_df_test =  cat_and_encoded[intial_features]
 # target_df_test = df_test.copy()
 
 for col in categorical_variables:
     dict_target = {}
     target_df, dict_target =  target_encoding(col, target_variable, target_df)
-    # target_df_test[col] = target_df_test[col].replace(list(dict_target.keys()), list(dict_target.values()))
+    target_df_test[col] = target_df_test[col].replace(list(dict_target.keys()), list(dict_target.values()))
     
     
 X_target =  dataset_to_Xandy(target_df, target_variable, only_X = True)
-# X_target_test =  dataset_to_Xandy(target_df_test, target_variable, only_X = True)
-
+X_target_test =  dataset_to_Xandy(target_df_test, target_variable, only_X = True)
+cat_and_encoded['target_encoded'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
 
 #### the target weighted encoded dataset 
 encoder = ce.target_encoder.TargetEncoder(cols = categorical_variables, verbose=False)
@@ -182,7 +192,7 @@ encoder.set_output()
 # target_w_df_test = encoder.transform(df_test)
 X_target_w =  dataset_to_Xandy(target_w_df, target_variable, only_X = True)
 # X_target_w_test =  dataset_to_Xandy(target_w_df_test, target_variable, only_X = True)
-cat_and_encoded['target_encoded'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
+cat_and_encoded['target_encoded_w'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
 
 
 ##### the GLMM encoded dataset 
@@ -191,7 +201,7 @@ glmm_df = encoder.fit_transform(df_train, df_train[target_variable])
 # glmm_df_test = encoder.transform(df_test)
 X_glmm =  dataset_to_Xandy(glmm_df, target_variable, only_X = True)
 # X_glmm_test =  dataset_to_Xandy(glmm_df_test, target_variable, only_X = True)
-cat_and_encoded['glmm']= encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
+cat_and_encoded['glmm']= encoder.transform(cat_and_encoded[intial_features])[which_category]
 
 
 
@@ -202,7 +212,7 @@ leave_df = encoder.fit_transform(df_train, df_train[target_variable])
 # leave_df_test = encoder.transform(df_test)
 X_leave=  dataset_to_Xandy(leave_df, target_variable, only_X = True)
 # X_leave_test =  dataset_to_Xandy(leave_df_test, target_variable, only_X = True)
-cat_and_encoded['leave'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
+cat_and_encoded['leave'] =encoder.transform(cat_and_encoded[intial_features])[which_category]
 
     
 ##### the CatBoost encoded dataset 
@@ -211,64 +221,78 @@ cat_df = encoder.fit_transform(df_train, df_train[target_variable])
 # cat_df_test = encoder.transform(df_test)
 X_cat=  dataset_to_Xandy(cat_df, target_variable, only_X = True)
 # X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
-cat_and_encoded['catboost'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
+cat_and_encoded['catboost'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
 
 
-# #### the 10-Fold Target Encoding
-# modified_df10, modified_df_test10 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
-# X_target10 =  dataset_to_Xandy(modified_df10, target_variable, only_X = True)
-# X_target_test10 =  dataset_to_Xandy(modified_df_test10, target_variable, only_X = True)
+#### the 10-Fold Target Encoding
+modified_df10, modified_df_test10 = k_fold_target_encoding(df_train, cat_and_encoded[intial_features], categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
+X_target10 =  dataset_to_Xandy(modified_df10, target_variable, only_X = True)
+X_target_test10 =  dataset_to_Xandy(modified_df_test10, target_variable, only_X = True)
+cat_and_encoded['target_10']  = X_target_test10[which_category]
 
 #### the 5-Fold Target Encoding
-modified_df5, modified_df_test5 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=5, which_encoder='target')
+modified_df5, modified_df_test5 = k_fold_target_encoding(df_train, cat_and_encoded[intial_features], categorical_variables, target_variable, how_many_folds=5, which_encoder='target')
 X_target5 =  dataset_to_Xandy(modified_df5, target_variable, only_X = True)
 X_target_test5 =  dataset_to_Xandy(modified_df_test5, target_variable, only_X = True)
-cat_and_encoded['target_5']  = X_target_test5
+cat_and_encoded['target_5']  = X_target_test5[which_category]
 
-# #### the 10-Fold GLMM Encoding
-# glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=10, which_encoder='glmm')
-# X_glmm10 =  dataset_to_Xandy(glmm_modified_df10, target_variable, only_X = True)
-# X_glmm_test10 =  dataset_to_Xandy(glmm_modified_df_test10, target_variable, only_X = True)
+#### the 10-Fold GLMM Encoding
+glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df_train, cat_and_encoded[intial_features], categorical_variables, target_variable, how_many_folds=10, which_encoder='glmm')
+X_glmm10 =  dataset_to_Xandy(glmm_modified_df10, target_variable, only_X = True)
+X_glmm_test10 =  dataset_to_Xandy(glmm_modified_df_test10, target_variable, only_X = True)
+cat_and_encoded['glmm_10']  = X_glmm_test10[which_category]
+
 
 #### the 5-Fold GLMM Encoding
-glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df_train, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=5, which_encoder='glmm')
+glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df_train, cat_and_encoded[intial_features], categorical_variables, target_variable, how_many_folds=5, which_encoder='glmm')
 X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
 X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
-cat_and_encoded['glmm_5']  = X_glmm_test5
+cat_and_encoded['glmm_5']  = X_glmm_test5[which_category]
 
-# which_category = 'area_cluster'
-# which_category = 'cp'
-which_category = 'Feature'
-
-
-fig, axs = plt.subplots(3, sharex=True, sharey=True)
-fig.suptitle('Different number of folds, GLMM (no folds, 5, 10) and WOE')
-axs[0].hist(X_glmm[which_category],bins = 50)
-axs[1].hist(X_glmm5[which_category],bins = 50)
-axs[2].hist(X_glmm10[which_category],bins = 50)
+methods = ['woe','target_encoded','target_encoded_w','glmm','leave','catboost','target_10','target_5','glmm_10','glmm_5']
+for index in range(len(methods)):
+    method = methods[index]
+    categories = cat_and_encoded['Feature_3']
+    encoded_values = (cat_and_encoded[method] - np.mean(cat_and_encoded[method]) ) / np.std(cat_and_encoded[method])
+    sort = np.argsort(encoded_values)
+    sorted_encoded = np.array(encoded_values[sort])
+    sorted_cat = np.array(categories[sort])
+    some_zeros = np.zeros((len(categories),))
+    plt.scatter(sorted_encoded,some_zeros+index)
+    for i in range(len(sorted_encoded)):
+        plt.text(sorted_encoded[i]-0.01,0+index-0.01,sorted_cat[i], size='medium', color='black')
+plt.title('Order of methods, down to up: \n'+str(methods))
+plt.yticks(np.arange(0,len(methods)))
 plt.show()
 
-fig, axs = plt.subplots(3, sharex=True, sharey=True)
-fig.suptitle('Different number of folds, target')
-axs[0].hist(X_target[which_category],bins = 50)
-axs[1].hist(X_target5[which_category],bins = 50)
-axs[2].hist(X_target10[which_category],bins = 50)
-plt.show()
+# fig, axs = plt.subplots(3, sharex=True, sharey=True)
+# fig.suptitle('Different number of folds, GLMM (no folds, 5, 10) and WOE')
+# axs[0].hist(X_glmm[which_category],bins = 50)
+# axs[1].hist(X_glmm5[which_category],bins = 50)
+# axs[2].hist(X_glmm10[which_category],bins = 50)
+# plt.show()
 
-fig, axs = plt.subplots(2, sharex=True, sharey=True)
-fig.suptitle('Leave-One-Out and Catboost encoders')
-axs[0].hist(X_leave[which_category],bins = 50)
-axs[1].hist(X_cat[which_category],bins = 50)
-plt.show()
+# fig, axs = plt.subplots(3, sharex=True, sharey=True)
+# fig.suptitle('Different number of folds, target')
+# axs[0].hist(X_target[which_category],bins = 50)
+# axs[1].hist(X_target5[which_category],bins = 50)
+# axs[2].hist(X_target10[which_category],bins = 50)
+# plt.show()
+
+# fig, axs = plt.subplots(2, sharex=True, sharey=True)
+# fig.suptitle('Leave-One-Out and Catboost encoders')
+# axs[0].hist(X_leave[which_category],bins = 50)
+# axs[1].hist(X_cat[which_category],bins = 50)
+# plt.show()
 
 
-plt.hist(X_simple[which_category],bins = 50)
-plt.title('Simple encoding')
-plt.show()
+# plt.hist(X_simple[which_category],bins = 50)
+# plt.title('Simple encoding')
+# plt.show()
 
-plt.hist(X_woe[which_category],bins = 50)
-plt.title('WOE encoding')
-plt.show()
+# plt.hist(X_woe[which_category],bins = 50)
+# plt.title('WOE encoding')
+# plt.show()
 
 # X_multiple_encoding = X_target.copy()
 # X_multiple_encoding = X_multiple_encoding.rename({'area_cluster': 'area_cluster_target'}, axis='columns')
@@ -289,50 +313,50 @@ plt.show()
 
 
 
-X_multiple_encoding = X_target.copy()
-X_multiple_encoding = X_multiple_encoding.rename({which_category: which_category+'_target'}, axis='columns')
-X_multiple_encoding[which_category+'_target_5'] = X_target5[which_category]
-X_multiple_encoding[which_category+'_target_10'] = X_target10[which_category]
-X_multiple_encoding[which_category+'_glmm'] = X_glmm[which_category]
-X_multiple_encoding[which_category+'_glmm5'] = X_glmm5[which_category]
-X_multiple_encoding[which_category+'_glmm10'] = X_glmm10[which_category]
+# X_multiple_encoding = X_target.copy()
+# X_multiple_encoding = X_multiple_encoding.rename({which_category: which_category+'_target'}, axis='columns')
+# X_multiple_encoding[which_category+'_target_5'] = X_target5[which_category]
+# X_multiple_encoding[which_category+'_target_10'] = X_target10[which_category]
+# X_multiple_encoding[which_category+'_glmm'] = X_glmm[which_category]
+# X_multiple_encoding[which_category+'_glmm5'] = X_glmm5[which_category]
+# X_multiple_encoding[which_category+'_glmm10'] = X_glmm10[which_category]
 
 
-X_multiple_encoding_test = X_target_test.copy()
-X_multiple_encoding_test = X_multiple_encoding_test.rename({which_category: which_category+'_target'}, axis='columns')
-X_multiple_encoding_test[which_category+'_target_5'] = X_target_test5[which_category]
-X_multiple_encoding_test[which_category+'_target_10'] = X_target_test10[which_category]
-X_multiple_encoding_test[which_category+'_glmm'] = X_glmm_test[which_category]
-X_multiple_encoding_test[which_category+'_glmm5'] = X_glmm_test5[which_category]
-X_multiple_encoding_test[which_category+'_glmm10'] = X_glmm_test10[which_category]
+# X_multiple_encoding_test = X_target_test.copy()
+# X_multiple_encoding_test = X_multiple_encoding_test.rename({which_category: which_category+'_target'}, axis='columns')
+# X_multiple_encoding_test[which_category+'_target_5'] = X_target_test5[which_category]
+# X_multiple_encoding_test[which_category+'_target_10'] = X_target_test10[which_category]
+# X_multiple_encoding_test[which_category+'_glmm'] = X_glmm_test[which_category]
+# X_multiple_encoding_test[which_category+'_glmm5'] = X_glmm_test5[which_category]
+# X_multiple_encoding_test[which_category+'_glmm10'] = X_glmm_test10[which_category]
 
-model_ensemble = DecisionTreeClassifier(max_depth=5)
-model_ensemble.fit(X_multiple_encoding, y_train)
-y_predicted = model_ensemble.predict(X_multiple_encoding_test)
-fpr, tpr, _ = metrics.roc_curve(y_test, y_predicted)
-area_roc_ensemble = metrics.auc(fpr, tpr)
-
-
-model_target = DecisionTreeClassifier(max_depth=5)
-model_target.fit(X_target, y_train)
-y_predicted = model_target.predict(X_target_test)
-fpr, tpr, _ = metrics.roc_curve(y_test, y_predicted)
-area_roc_target = metrics.auc(fpr, tpr)
+# model_ensemble = DecisionTreeClassifier(max_depth=5)
+# model_ensemble.fit(X_multiple_encoding, y_train)
+# y_predicted = model_ensemble.predict(X_multiple_encoding_test)
+# fpr, tpr, _ = metrics.roc_curve(y_test, y_predicted)
+# area_roc_ensemble = metrics.auc(fpr, tpr)
 
 
+# model_target = DecisionTreeClassifier(max_depth=5)
+# model_target.fit(X_target, y_train)
+# y_predicted = model_target.predict(X_target_test)
+# fpr, tpr, _ = metrics.roc_curve(y_test, y_predicted)
+# area_roc_target = metrics.auc(fpr, tpr)
 
-fig = plt.figure(figsize=(50,40))
-_ = tree.plot_tree(model_ensemble,
-                   feature_names=X_multiple_encoding.keys(), 
-                   class_names='target',
-                   filled=True)
 
 
-fig = plt.figure(figsize=(50,40))
-_ = tree.plot_tree(model_target,
-                   feature_names=X_multiple_encoding.keys(), 
-                   class_names='target',
-                   filled=True)
+# fig = plt.figure(figsize=(50,40))
+# _ = tree.plot_tree(model_ensemble,
+#                    feature_names=X_multiple_encoding.keys(), 
+#                    class_names='target',
+#                    filled=True)
+
+
+# fig = plt.figure(figsize=(50,40))
+# _ = tree.plot_tree(model_target,
+#                    feature_names=X_multiple_encoding.keys(), 
+#                    class_names='target',
+#                    filled=True)
 
 
 

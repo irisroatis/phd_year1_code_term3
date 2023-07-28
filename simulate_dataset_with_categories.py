@@ -27,7 +27,7 @@ which_column_to_categories = 'Feature_3'
 df = pd.DataFrame(testing_data[0], columns = names_columns)
 df[target_variable] = belonging_classes[0]
 
-how_many_bins = 10
+how_many_bins = 15
 
 bins_col3 = create_bins(df[which_column_to_categories], df[which_column_to_categories], how_many_bins+1, 'fixed_number')
 
