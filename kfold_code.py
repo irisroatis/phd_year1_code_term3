@@ -67,7 +67,7 @@ def k_fold_target_encoding(df, df_test, categorical_variables, target_variable, 
                encoder.fit(df_train, df_train[target_variable])
                modified_df[new_column].iloc[test_index] = encoder.transform( df_train_test)[categorical_variable]
 
-    modified_df[new_column] =  modified_df[new_column].replace([np.nan],[np.nanmean(modified_df[new_column])])
+    modified_df[new_column] =  modified_df[new_column].replace([np.nan],[np.nanmean(modified_df[target_variable])])
     for cat in categories:
         which_cat = modified_df[modified_df[categorical_variable] == cat]
         avg_value = which_cat[new_column].mean()

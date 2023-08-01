@@ -114,6 +114,45 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_cat=  dataset_to_Xandy(cat_df, target_variable, only_X = True)
     X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
     
+    cat_df_test_difftest = df_test.copy()
+    cat_df_test_shuffle = df_test.copy()
+    dictionary_cat={}
+    dictionary_cat_shuffle = {}
+    
+    
+    index_dataset = np.arange(0, df.shape[0])
+    np.random.shuffle(index_dataset)
+    encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
+    cat_df_shuffled = encoder.fit_transform(df_train.iloc[index_dataset], df_train.iloc[index_dataset][target_variable])
+    back_cat_df = cat_df_shuffled.sort_index()
+    final_cat_df = cat_df.copy()
+    
+    
+    for col in categorical_variables:
+        unique_cat = list(set(df[col]))
+        final_cat_df[col] +=  back_cat_df[col]
+        final_cat_df[col] /= 2
+    
+        for category in unique_cat:
+            indices = np.where(df[col] == category)[0]
+            part_dataset_encoded = cat_df.iloc[indices]
+            get_average = np.mean(part_dataset_encoded[col])
+            dictionary_cat[category] = get_average
+            
+            part_dataset_encoded_final = final_cat_df.iloc[indices]
+            get_average = np.mean(part_dataset_encoded_final['Feature_3'])
+            dictionary_cat_shuffle[category] = get_average            
+            
+            cat_df_test_difftest[col] = cat_df_test_difftest[col].replace(list(dictionary_cat.keys()), list(dictionary_cat.values()))
+            cat_df_test_shuffle[col] = cat_df_test_shuffle[col].replace(list(dictionary_cat_shuffle.keys()), list(dictionary_cat_shuffle.values()))
+    
+    
+    X_cat_test_difftest =  dataset_to_Xandy(cat_df_test_difftest, target_variable, only_X = True)
+    X_cat_test_shuffle =  dataset_to_Xandy(cat_df_test_shuffle, target_variable, only_X = True)
+    X_cat_shuffle=  dataset_to_Xandy(final_cat_df, target_variable, only_X = True)
+    
+    
+    
     
     #### the 10-Fold Target Encoding
     modified_df10, modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
@@ -167,6 +206,10 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
                 auc = calc_conf_matrix(X_leave,y_train,X_leave_test,y_test, classifier)
             elif method == 'catboost':
                 auc = calc_conf_matrix(X_cat,y_train,X_cat_test,y_test, classifier)
+            elif method == 'catboost_difftest':
+                auc = calc_conf_matrix(X_cat,y_train,X_cat_test_difftest,y_test, classifier)
+            elif method == 'catboost_shuffle':
+                auc = calc_conf_matrix(X_cat_shuffle,y_train,X_cat_test_shuffle,y_test, classifier)
             elif method =='target10fold':
                 auc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
             elif method == 'target5fold':
@@ -186,7 +229,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 
 # methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
-methods = ['remove_cat','simple','onehot','effect','target','woe','glmm','leave','catboost','target5fold','target10fold','glmm5fold','glmm10fold']
+methods = ['remove_cat','simple','onehot','effect','target','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target5fold','target10fold','glmm5fold','glmm10fold']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
 
 
@@ -383,7 +426,7 @@ from prettytable import PrettyTable
 # Specify the Column Names while initializing the Table
 myTable = PrettyTable([which_dataset]+classifiers+['MEAN SCORE'])
 
-colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered']
+colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered','black','purple']
 
 
 how_many_methods = len(methods)
@@ -400,34 +443,41 @@ print(myTable)
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.xticks(np.arange(4,how_many_methodsplus2 * how_many_classifiers,how_many_methodsplus2),labels = classifiers)
 plt.title('Dataset: ' + str(which_dataset))
-plt.show()
+plt.show() 
 
 
-import seaborn as sns
+# import seaborn as sns
+# plt.figure(figsize=(10,7))
+# g = sns.heatmap(score_matrix, annot=True, fmt=".5f")
+# g.set_xticklabels(classifiers+['MEAN SCORE'], rotation = 45)
+# g.set_yticklabels(methods, rotation = 45)
+# plt.title('Plot scores, Dataset: ' + str(which_dataset) )
+# plt.show()
+
+include_means_conf = np.zeros((len(methods)+1, len(classifiers)+1))
+include_means_conf[:-1,:-1] = array_confusion_matrix
+include_means_conf[:-1,-1] = np.mean(array_confusion_matrix, axis = 1)
+include_means_conf[-1,:-1] = np.mean(array_confusion_matrix, axis = 0)
+
+include_means_conf[-1,-1]  =  np.nan
+
+
+
 plt.figure(figsize=(10,7))
-g = sns.heatmap(score_matrix, annot=True, fmt=".5f")
-g.set_xticklabels(classifiers+['MEAN SCORE'], rotation = 45)
-g.set_yticklabels(methods, rotation = 45)
-plt.title('Plot scores, Dataset: ' + str(which_dataset) )
-plt.show()
-
-
-
-plt.figure(figsize=(10,7))
-g = sns.heatmap(array_confusion_matrix, annot=True, fmt=".5f")
-g.set_xticklabels(classifiers, rotation = 45)
-g.set_yticklabels(methods, rotation = 45)
+g = sns.heatmap(include_means_conf, annot=True, fmt=".5f")
+g.set_xticklabels(classifiers+['MEAN'], rotation = 45)
+g.set_yticklabels(methods+['MEAN'], rotation = 45)
 plt.title('Plot AUC, Dataset: ' + str(which_dataset) )
 plt.show()
 
-ranking = np.zeros((len(methods), len(classifiers)+1))
-for col in range(ranking.shape[1]-1):
-    ranking[:,col] = rankdata(array_confusion_matrix[:,col])
-ranking[:,-1] = np.mean(ranking, axis = 1)
+# ranking = np.zeros((len(methods), len(classifiers)+1))
+# for col in range(ranking.shape[1]-1):
+#     ranking[:,col] = rankdata(array_confusion_matrix[:,col])
+# ranking[:,-1] = np.mean(ranking, axis = 1)
 
-plt.figure(figsize=(10,7))
-g = sns.heatmap(ranking, annot=True, fmt=".5f")
-g.set_xticklabels(classifiers+['MEAN RANK'], rotation = 45)
-g.set_yticklabels(methods, rotation = 45)
-plt.title('Plot ranks, Dataset: ' + str(which_dataset) )
-plt.show()
+# plt.figure(figsize=(10,7))
+# g = sns.heatmap(ranking, annot=True, fmt=".5f")
+# g.set_xticklabels(classifiers+['MEAN RANK'], rotation = 45)
+# g.set_yticklabels(methods, rotation = 45)
+# plt.title('Plot ranks, Dataset: ' + str(which_dataset) )
+# plt.show()

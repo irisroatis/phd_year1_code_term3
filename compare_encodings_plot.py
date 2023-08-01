@@ -90,6 +90,7 @@ which_category = 'Feature_3'
 
 
 
+
 # #### ESA example
 # list_cat = ['A','C','B','A','B','A']
 # list_target = np.array([1,0,1,1,0,0])
@@ -153,12 +154,16 @@ onehot_df = encoder.fit_transform(df_train)
 X_onehot =  dataset_to_Xandy(onehot_df, target_variable, only_X = True)
 # X_onehot_test =  dataset_to_Xandy(onehot_df_test, target_variable, only_X = True)
 
+
+
 ##### the effect encoded dataset (after binned)
 encoder = ce.sum_coding.SumEncoder(cols=categorical_variables,verbose=False)
 effect_df = encoder.fit_transform(df_train)
 # effect_df_test = encoder.transform(df_test)
 X_effect =  dataset_to_Xandy(effect_df, target_variable, only_X = True)
 # X_effect_test =  dataset_to_Xandy(effect_df_test, target_variable, only_X = True)
+
+
 
 ##### the WOE encoded dataset 
 encoder = ce.woe.WOEEncoder(cols=categorical_variables,verbose=False)
@@ -214,6 +219,21 @@ X_leave=  dataset_to_Xandy(leave_df, target_variable, only_X = True)
 # X_leave_test =  dataset_to_Xandy(leave_df_test, target_variable, only_X = True)
 cat_and_encoded['leave'] =encoder.transform(cat_and_encoded[intial_features])[which_category]
 
+dictionary_loo = {}
+dictionary_loo_prior = {}
+
+unique_cat = list(set(df[which_category]))
+for category in unique_cat:
+    indices = np.where(df['Feature_3'] == category)[0]
+    part_dataset_encoded = leave_df.iloc[indices]
+    get_average = np.mean(part_dataset_encoded['Feature_3'])
+    dictionary_loo[category] = get_average
+    
+    part_dataset = df.iloc[indices]
+    get_proportion =len( np.where(part_dataset['target']==1)[0]) / len(indices)
+    dictionary_loo_prior[category] = get_proportion
+    
+
     
 ##### the CatBoost encoded dataset 
 encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
@@ -222,6 +242,40 @@ cat_df = encoder.fit_transform(df_train, df_train[target_variable])
 X_cat=  dataset_to_Xandy(cat_df, target_variable, only_X = True)
 # X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
 cat_and_encoded['catboost'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
+
+dictionary_cat = {}
+dictionary_cat_shuffle = {}
+
+unique_cat = list(set(df[which_category]))
+for category in unique_cat:
+    indices = np.where(df['Feature_3'] == category)[0]
+    part_dataset_encoded = cat_df.iloc[indices]
+    get_average = np.mean(part_dataset_encoded['Feature_3'])
+    dictionary_cat[category] = get_average
+    
+    # part_dataset = df.iloc[indices]
+    # get_proportion =len( np.where(part_dataset['target']==1)[0]) / len(indices)
+    # dictionary_cat_prior[category] = get_proportion
+    
+cat_and_encoded['catboost_difftest'] = dictionary_cat.values()
+    
+index_dataset = np.arange(0, df.shape[0])
+np.random.shuffle(index_dataset)
+encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
+cat_df_shuffled = encoder.fit_transform(df_train.iloc[index_dataset], df_train.iloc[index_dataset][target_variable])
+back_cat_df = cat_df_shuffled.sort_index()
+final_cat_df = cat_df[intial_features]
+final_cat_df['Feature_3'] += back_cat_df['Feature_3']
+final_cat_df['Feature_3']  /= 2
+
+for category in unique_cat:
+    indices = np.where(df['Feature_3'] == category)[0]
+    part_dataset_encoded = final_cat_df.iloc[indices]
+    get_average = np.mean(part_dataset_encoded['Feature_3'])
+    dictionary_cat_shuffle[category] = get_average
+    
+cat_and_encoded['catboost_shuffle'] = dictionary_cat_shuffle.values()   
+
 
 
 #### the 10-Fold Target Encoding
@@ -249,7 +303,7 @@ X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
 X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
 cat_and_encoded['glmm_5']  = X_glmm_test5[which_category]
 
-methods = ['woe','target_encoded','target_encoded_w','glmm','leave','catboost','target_10','target_5','glmm_10','glmm_5']
+methods = ['woe','target_encoded','target_encoded_w','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target_10','target_5','glmm_10','glmm_5']
 for index in range(len(methods)):
     method = methods[index]
     categories = cat_and_encoded['Feature_3']
@@ -324,7 +378,7 @@ plt.show()
 
 # X_multiple_encoding_test = X_target_test.copy()
 # X_multiple_encoding_test = X_multiple_encoding_test.rename({which_category: which_category+'_target'}, axis='columns')
-# X_multiple_encoding_test[which_category+'_target_5'] = X_target_test5[which_category]
+# X_multiple_encoding_test[which_category+'dictionary_cat_target_5'] = X_target_test5[which_category]
 # X_multiple_encoding_test[which_category+'_target_10'] = X_target_test10[which_category]
 # X_multiple_encoding_test[which_category+'_glmm'] = X_glmm_test[which_category]
 # X_multiple_encoding_test[which_category+'_glmm5'] = X_glmm_test5[which_category]
@@ -345,7 +399,7 @@ plt.show()
 
 
 
-# fig = plt.figure(figsize=(50,40))
+# fig = plt.figure(figsize=(50,40))dictionary_cat
 # _ = tree.plot_tree(model_ensemble,
 #                    feature_names=X_multiple_encoding.keys(), 
 #                    class_names='target',
