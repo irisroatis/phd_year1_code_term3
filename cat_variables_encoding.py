@@ -127,6 +127,8 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     back_cat_df = cat_df_shuffled.sort_index()
     final_cat_df = cat_df.copy()
     
+    alpha = 1
+    prior = 
     
     for col in categorical_variables:
         unique_cat = list(set(df[col]))
@@ -136,9 +138,8 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
         for category in unique_cat:
             indices = np.where(df[col] == category)[0]
             part_dataset_encoded = cat_df.iloc[indices]
-            get_average = np.mean(part_dataset_encoded[col])
+            get_average = np.sum(part_dataset_encoded[col]) + q
             dictionary_cat[category] = get_average
-            
             part_dataset_encoded_final = final_cat_df.iloc[indices]
             get_average = np.mean(part_dataset_encoded_final['Feature_3'])
             dictionary_cat_shuffle[category] = get_average            

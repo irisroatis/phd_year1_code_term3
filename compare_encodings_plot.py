@@ -193,7 +193,6 @@ cat_and_encoded['target_encoded'] = encoder.transform(cat_and_encoded[intial_fea
 #### the target weighted encoded dataset 
 encoder = ce.target_encoder.TargetEncoder(cols = categorical_variables, verbose=False)
 target_w_df = encoder.fit_transform(df_train, df_train[target_variable])
-encoder.set_output()
 # target_w_df_test = encoder.transform(df_test)
 X_target_w =  dataset_to_Xandy(target_w_df, target_variable, only_X = True)
 # X_target_w_test =  dataset_to_Xandy(target_w_df_test, target_variable, only_X = True)
@@ -243,6 +242,12 @@ X_cat=  dataset_to_Xandy(cat_df, target_variable, only_X = True)
 # X_cat_test =  dataset_to_Xandy(cat_df_test, target_variable, only_X = True)
 cat_and_encoded['catboost'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
 
+how_many_1s = len(df[df[target_variable] == 1])
+alpha = 1
+prior = how_many_1s / df_train.shape[0]
+
+
+
 dictionary_cat = {}
 dictionary_cat_shuffle = {}
 
@@ -250,8 +255,9 @@ unique_cat = list(set(df[which_category]))
 for category in unique_cat:
     indices = np.where(df['Feature_3'] == category)[0]
     part_dataset_encoded = cat_df.iloc[indices]
-    get_average = np.mean(part_dataset_encoded['Feature_3'])
-    dictionary_cat[category] = get_average
+    get_numer = np.sum(part_dataset_encoded['Feature_3']) + alpha * prior
+    dictionary_cat[category] = get_numer / (len(indices) + alpha)
+
     
     # part_dataset = df.iloc[indices]
     # get_proportion =len( np.where(part_dataset['target']==1)[0]) / len(indices)
@@ -259,7 +265,7 @@ for category in unique_cat:
     
 cat_and_encoded['catboost_difftest'] = dictionary_cat.values()
     
-index_dataset = np.arange(0, df.shape[0])
+index_dataset = np.arange(0, df_train.shape[0])
 np.random.shuffle(index_dataset)
 encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
 cat_df_shuffled = encoder.fit_transform(df_train.iloc[index_dataset], df_train.iloc[index_dataset][target_variable])
@@ -268,11 +274,14 @@ final_cat_df = cat_df[intial_features]
 final_cat_df['Feature_3'] += back_cat_df['Feature_3']
 final_cat_df['Feature_3']  /= 2
 
+
+
+
 for category in unique_cat:
     indices = np.where(df['Feature_3'] == category)[0]
     part_dataset_encoded = final_cat_df.iloc[indices]
-    get_average = np.mean(part_dataset_encoded['Feature_3'])
-    dictionary_cat_shuffle[category] = get_average
+    get_numer = np.sum(part_dataset_encoded['Feature_3']) + alpha * prior
+    dictionary_cat_shuffle[category] = get_numer / (len(indices) + alpha)
     
 cat_and_encoded['catboost_shuffle'] = dictionary_cat_shuffle.values()   
 
@@ -304,7 +313,8 @@ X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X
 cat_and_encoded['glmm_5']  = X_glmm_test5[which_category]
 
 methods = ['woe','target_encoded','target_encoded_w','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target_10','target_5','glmm_10','glmm_5']
-for index in range(len(methods)):
+how_many_methods = len(methods)
+for index in range(how_many_methods):
     method = methods[index]
     categories = cat_and_encoded['Feature_3']
     encoded_values = (cat_and_encoded[method] - np.mean(cat_and_encoded[method]) ) / np.std(cat_and_encoded[method])
@@ -312,9 +322,10 @@ for index in range(len(methods)):
     sorted_encoded = np.array(encoded_values[sort])
     sorted_cat = np.array(categories[sort])
     some_zeros = np.zeros((len(categories),))
-    plt.scatter(sorted_encoded,some_zeros+index)
+    plt.scatter(sorted_encoded,some_zeros+how_many_methods - 1 - index, label = methods[index])
     for i in range(len(sorted_encoded)):
         plt.text(sorted_encoded[i]-0.01,0+index-0.01,sorted_cat[i], size='medium', color='black')
+plt.legend(loc='right')
 plt.title('Order of methods, down to up: \n'+str(methods))
 plt.yticks(np.arange(0,len(methods)))
 plt.show()
