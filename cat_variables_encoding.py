@@ -90,6 +90,19 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_target =  dataset_to_Xandy(target_df, target_variable, only_X = True)
     X_target_test =  dataset_to_Xandy(target_df_test, target_variable, only_X = True)
     
+    
+    
+    ##### the target encoded dataset 
+    
+
+    encoder = ce.target_encoder.TargetEncoder(cols = categorical_variables, verbose=False)
+    target_w_df = encoder.fit_transform(df, df[target_variable])
+    target_w_test_df = encoder.transform(df_test)
+    X_target_w =  dataset_to_Xandy(target_w_df, target_variable, only_X = True)
+    X_target_w_test =  dataset_to_Xandy(target_w_test_df, target_variable, only_X = True)
+    
+ 
+    
     ##### the GLMM encoded dataset 
     encoder = ce.glmm.GLMMEncoder(cols=categorical_variables,verbose=False)
     glmm_df = encoder.fit_transform(df, df[target_variable])
@@ -123,12 +136,14 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     index_dataset = np.arange(0, df.shape[0])
     np.random.shuffle(index_dataset)
     encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
-    cat_df_shuffled = encoder.fit_transform(df_train.iloc[index_dataset], df_train.iloc[index_dataset][target_variable])
+    cat_df_shuffled = encoder.fit_transform(df.iloc[index_dataset], df.iloc[index_dataset][target_variable])
     back_cat_df = cat_df_shuffled.sort_index()
     final_cat_df = cat_df.copy()
     
+    how_many_1s = len(df[df[target_variable] == 1])
     alpha = 1
-    prior = 
+    prior = how_many_1s / df.shape[0]
+    
     
     for col in categorical_variables:
         unique_cat = list(set(df[col]))
@@ -138,11 +153,13 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
         for category in unique_cat:
             indices = np.where(df[col] == category)[0]
             part_dataset_encoded = cat_df.iloc[indices]
-            get_average = np.sum(part_dataset_encoded[col]) + q
-            dictionary_cat[category] = get_average
+            get_numer = np.sum(part_dataset_encoded[col]) + alpha * prior
+            dictionary_cat[category] =  get_numer / (len(indices) + alpha)
+            
+            
             part_dataset_encoded_final = final_cat_df.iloc[indices]
-            get_average = np.mean(part_dataset_encoded_final['Feature_3'])
-            dictionary_cat_shuffle[category] = get_average            
+            get_numer = np.sum(part_dataset_encoded_final['Feature_3']) + alpha * prior
+            dictionary_cat_shuffle[category] =  get_numer / (len(indices) + alpha)     
             
             cat_df_test_difftest[col] = cat_df_test_difftest[col].replace(list(dictionary_cat.keys()), list(dictionary_cat.values()))
             cat_df_test_shuffle[col] = cat_df_test_shuffle[col].replace(list(dictionary_cat_shuffle.keys()), list(dictionary_cat_shuffle.values()))
@@ -151,8 +168,6 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_cat_test_difftest =  dataset_to_Xandy(cat_df_test_difftest, target_variable, only_X = True)
     X_cat_test_shuffle =  dataset_to_Xandy(cat_df_test_shuffle, target_variable, only_X = True)
     X_cat_shuffle=  dataset_to_Xandy(final_cat_df, target_variable, only_X = True)
-    
-    
     
     
     #### the 10-Fold Target Encoding
@@ -201,6 +216,8 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
                 auc = calc_conf_matrix(X_woe,y_train,X_woe_test,y_test, classifier)
             elif method == 'target':
                 auc = calc_conf_matrix(X_target,y_train,X_target_test,y_test, classifier)
+            elif method == 'target_w':
+                auc = calc_conf_matrix(X_target_w,y_train,X_target_w_test,y_test, classifier)
             elif method == 'glmm':
                 auc = calc_conf_matrix(X_glmm,y_train,X_glmm_test,y_test, classifier)
             elif method == 'leave':
@@ -212,7 +229,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
             elif method == 'catboost_shuffle':
                 auc = calc_conf_matrix(X_cat_shuffle,y_train,X_cat_test_shuffle,y_test, classifier)
             elif method =='target10fold':
-                auc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
+                autargetc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
             elif method == 'target5fold':
                 auc = calc_conf_matrix(X_target5,y_train,X_target_test5,y_test, classifier)
             elif method == 'glmm5fold':
@@ -230,7 +247,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 
 # methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
-methods = ['remove_cat','simple','onehot','effect','target','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target5fold','target10fold','glmm5fold','glmm10fold']
+methods = ['remove_cat','simple','onehot','effect','target','target_w','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target5fold','target10fold','glmm5fold','glmm10fold']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
 
 
@@ -348,9 +365,6 @@ continuous_variables = ['Feature_1','Feature_2']
 
 
 
-
-
-
 ##########################################################################
 
 
@@ -427,7 +441,7 @@ from prettytable import PrettyTable
 # Specify the Column Names while initializing the Table
 myTable = PrettyTable([which_dataset]+classifiers+['MEAN SCORE'])
 
-colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered','black','purple']
+colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered','black','purple','magenta']
 
 
 how_many_methods = len(methods)

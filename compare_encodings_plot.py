@@ -82,7 +82,8 @@ categorical_variables = ['Feature_3']
 target_variable = 'target'
 continuous_variables = ['Feature_1','Feature_2']
 
-
+bins = np.loadtxt('bins.txt', delimiter= ',')
+order_cat = np.loadtxt('order_cat.txt', delimiter= ',')
 
 # which_category = 'area_cluster'
 # which_category = 'cp'
@@ -312,8 +313,20 @@ X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
 X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
 cat_and_encoded['glmm_5']  = X_glmm_test5[which_category]
 
+
+
+
 methods = ['woe','target_encoded','target_encoded_w','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target_10','target_5','glmm_10','glmm_5']
 how_many_methods = len(methods)
+orders = np.zeros((how_many_methods+1, len(unique_cat)))
+orders[0,:] = order_cat
+
+
+
+rank_categories_indices = np.argsort(orders[0,:])
+diff_in_rank = []
+
+
 for index in range(how_many_methods):
     method = methods[index]
     categories = cat_and_encoded['Feature_3']
@@ -321,13 +334,38 @@ for index in range(how_many_methods):
     sort = np.argsort(encoded_values)
     sorted_encoded = np.array(encoded_values[sort])
     sorted_cat = np.array(categories[sort])
+    orders[index+1,:] = sorted_cat
     some_zeros = np.zeros((len(categories),))
     plt.scatter(sorted_encoded,some_zeros+how_many_methods - 1 - index, label = methods[index])
     for i in range(len(sorted_encoded)):
-        plt.text(sorted_encoded[i]-0.01,0+index-0.01,sorted_cat[i], size='medium', color='black')
-plt.legend(loc='right')
+        plt.text(sorted_encoded[i]-0.01,0+how_many_methods - 1 - index-0.01,sorted_cat[i], size='medium', color='black')
+        
+    diff_in_rank.append(np.sum(abs(rank_categories_indices - sort))/len(unique_cat))
+        
+    
+        
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.title('Order of methods, down to up: \n'+str(methods))
 plt.yticks(np.arange(0,len(methods)))
+plt.show()
+
+
+all_plot = np.zeros((orders.shape[0],orders.shape[1]+1))
+all_plot[:,:-1] = orders
+all_plot[1:,-1] = diff_in_rank
+all_plot[0,-1] = np.nan
+
+
+
+
+
+
+
+plt.figure(figsize=(15,7))
+g = sns.heatmap(all_plot, annot=True, fmt=".1f")
+g.set_xticklabels(list(orders[0,:])+['avg_r_diff'], rotation = 45)
+g.set_yticklabels(['ACTUAL']+methods, rotation = 45)
+plt.title('ORDERS OF ENCODERS: ' + str(which_dataset) )
 plt.show()
 
 # fig, axs = plt.subplots(3, sharex=True, sharey=True)

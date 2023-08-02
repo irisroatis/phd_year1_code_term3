@@ -41,3 +41,5 @@ df[which_column_to_categories] = digitized
 df[which_column_to_categories] = df[which_column_to_categories].replace(categories, categories_shuffled)
 
 df.to_csv('simulate_categories.csv', index = False)
+bins_col3.tofile('bins.txt',sep=',')
+np.array(categories_shuffled).tofile('order_cat.txt',sep=',')
