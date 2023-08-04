@@ -20,6 +20,7 @@ import category_encoders as ce
 from sklearn import preprocessing
 import random
 import numpy as np
+from scipy.stats import norm
 import seaborn as sns
 
 def dataset_to_Xandy(dataset, target_variable, only_X = True):
@@ -198,4 +199,9 @@ def create_binned_dataset(df, df_test, continuous_variables, how_many_rows,  how
     
     return binned_df, binned_df_test
    
+def missclassification_samevar(mu1, mu2, var):
+    alpha = np.linalg.inv(var) @ (mu1 - mu2)
+    delta_sq = np.transpose(alpha) @ (mu1 - mu2)
+    return  norm.cdf(- 0.5 * np.sqrt(delta_sq))
+    
     

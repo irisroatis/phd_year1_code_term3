@@ -50,10 +50,6 @@ woe_df = encoder.fit_transform(df, df[target_variable])
 cat_and_encoded['woe'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
 
 
-encoder = ce.woe.WOEEncoder(cols=categorical_variables,verbose=False)
-woe_df = encoder.fit_transform(df, df[target_variable])
-cat_and_encoded['woe'] = encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
-
 encoder = ce.leave_one_out.LeaveOneOutEncoder(cols=categorical_variables,verbose=False)
 leave_df = encoder.fit_transform(df, df[target_variable])
 cat_and_encoded['leave'] =encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
@@ -61,8 +57,3 @@ cat_and_encoded['leave'] =encoder.transform(cat_and_encoded[['Feature','target']
 encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
 cat_df = encoder.fit_transform(df, df[target_variable])
 cat_and_encoded['cat'] =encoder.transform(cat_and_encoded[['Feature','target']])['Feature']
-
-modified_df5, modified_df_test5 = k_fold_target_encoding(df, cat_and_encoded[['Feature','target']], categorical_variables, target_variable, how_many_folds=3, which_encoder='target')
-X_target5 =  dataset_to_Xandy(modified_df5, target_variable, only_X = True)
-X_target_test5 =  dataset_to_Xandy(modified_df_test5, target_variable, only_X = True)
-cat_and_encoded['target_5']  = X_target_test5['Feature']

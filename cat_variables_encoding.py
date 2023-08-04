@@ -409,7 +409,6 @@ array_confusion_matrix /= how_many_cv
 
 # if score is wanted, probably not the goal of our project
 
-
 score_matrix = np.zeros((len(methods), len(classifiers)+1))
 min_overall = np.min(np.min(array_confusion_matrix, axis = 1), axis = 0)
 q3, q1 = np.percentile(array_confusion_matrix, [75 ,25])
@@ -423,18 +422,22 @@ score_matrix[:,-1] = np.mean(score_matrix, axis = 1)
 
 mi_array = np.zeros_like(array_confusion_matrix)
 ma_array = np.zeros_like( array_confusion_matrix)
+variance = np.zeros_like( array_confusion_matrix)
 for i1 in range(len(methods)):
     for i2 in range(len(classifiers)):
         mi = 1
         ma = 0
+        over_all_cv = []
         for cv in range(how_many_cv):
             value = conf_matrix_list[cv][i1,i2]
+            over_all_cv.append(value)
             if ma < value:
                 ma = value
             if mi > value:
                 mi = value
         mi_array[i1,i2] = mi
         ma_array[i1,i2] = ma
+        variance[i1,i2] = np.std(over_all_cv)
 
 from prettytable import PrettyTable
  
@@ -445,7 +448,7 @@ colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown'
 
 
 how_many_methods = len(methods)
-how_many_methodsplus2 = how_many_methods + 5
+how_many_methodsplus2 = how_many_methods + 7
 how_many_classifiers = len(classifiers)
 
 plt.figure(figsize=(12,7))
@@ -484,6 +487,14 @@ g.set_xticklabels(classifiers+['MEAN'], rotation = 45)
 g.set_yticklabels(methods+['MEAN'], rotation = 45)
 plt.title('Plot AUC, Dataset: ' + str(which_dataset) )
 plt.show()
+
+plt.figure(figsize=(10,7))
+g = sns.heatmap(variance, annot=True, fmt=".5f")
+g.set_xticklabels(classifiers, rotation = 45)
+g.set_yticklabels(methods, rotation = 45)
+plt.title('Plot Variance, Dataset: ' + str(which_dataset) )
+plt.show()
+
 
 # ranking = np.zeros((len(methods), len(classifiers)+1))
 # for col in range(ranking.shape[1]-1):

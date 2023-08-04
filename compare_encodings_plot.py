@@ -197,7 +197,7 @@ target_w_df = encoder.fit_transform(df_train, df_train[target_variable])
 # target_w_df_test = encoder.transform(df_test)
 X_target_w =  dataset_to_Xandy(target_w_df, target_variable, only_X = True)
 # X_target_w_test =  dataset_to_Xandy(target_w_df_test, target_variable, only_X = True)
-cat_and_encoded['target_encoded_w'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
+cat_and_encoded['target_w'] = encoder.transform(cat_and_encoded[intial_features])[which_category]
 
 
 ##### the GLMM encoded dataset 
@@ -316,7 +316,7 @@ cat_and_encoded['glmm_5']  = X_glmm_test5[which_category]
 
 
 
-methods = ['woe','target_encoded','target_encoded_w','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target_10','target_5','glmm_10','glmm_5']
+methods = ['woe','target_encoded','target_w','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target_10','target_5','glmm_10','glmm_5']
 how_many_methods = len(methods)
 orders = np.zeros((how_many_methods+1, len(unique_cat)))
 orders[0,:] = order_cat
@@ -345,7 +345,7 @@ for index in range(how_many_methods):
     
         
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.title('Order of methods, down to up: \n'+str(methods))
+plt.title('Order of methods')
 plt.yticks(np.arange(0,len(methods)))
 plt.show()
 

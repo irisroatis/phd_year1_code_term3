@@ -12,7 +12,7 @@ import numpy as np
 import random
 
 mu1 = np.array([0, 0, 0])
-mu2 = np.array([1, 1, 1])
+mu2 = np.array([1, 1, 0])
 sigma1 = np.identity(3)
 sigma2 = np.identity(3)
 how_many_times_repeat = 1
