@@ -27,13 +27,16 @@ from kfold_code import *
 from sklearn import tree
 from itertools import permutations
 
-# list_cat = ['A','C','B','A','B','A']
-# list_target = np.array([1,0,1,1,0,0])
-# df = pd.DataFrame(list_target,columns = ['target'])
-# df['Feature'] = list_cat
-# categorical_variables=['Feature']
-# target_variable = 'target'
+list_cat = ['A','C','B','A','B','A']
+list_target = np.array([1,0,1,1,0,0])
+df = pd.DataFrame(list_target,columns = ['target'])
+df['Feature'] = list_cat
+categorical_variables=['Feature']
+target_variable = 'target'
 
+encoder =  ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False, a = alpha)
+encoder.fit(df, df[target_variable])  
+see = encoder.transform(df)
 
 # list_cat = ['A','A','A','A','B','B','B','C','C','D']
 # list_target = np.array([0,1,0,1,0,1,0,1,0,1])
@@ -100,3 +103,11 @@ for cat in unique_values:
        
        matrix[:,index] = encoded_current[categorical_variables[0]]
     store_everything[cat] = matrix
+
+for cat in unique_values:
+    plt.figure()
+    this_cat = store_everything[cat]
+    for i in range(this_cat.shape[0]):
+        plt.hist(this_cat[i,:], alpha = 0.3, bins = 15)
+        plt.show()
+

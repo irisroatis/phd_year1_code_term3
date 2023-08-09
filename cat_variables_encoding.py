@@ -26,7 +26,7 @@ from scipy.stats import rankdata
 from kfold_code import *
 
 
-def whole_process_categorical(df, df_test, categorical_variables, continuous_variables, target_variable, which_dataset):
+def whole_process_categorical(df, df_test, categorical_variables, continuous_variables, target_variable, which_dataset, how_many_permutations):
     
     how_many_rows = df.shape[0]
     how_many_rows_test = df_test.shape[0]
@@ -132,13 +132,19 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     dictionary_cat={}
     dictionary_cat_shuffle = {}
     
-    
-    index_dataset = np.arange(0, df.shape[0])
-    np.random.shuffle(index_dataset)
-    encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
-    cat_df_shuffled = encoder.fit_transform(df.iloc[index_dataset], df.iloc[index_dataset][target_variable])
-    back_cat_df = cat_df_shuffled.sort_index()
     final_cat_df = cat_df.copy()
+    
+    
+    for s in range(how_many_permutations):
+        index_dataset = np.arange(0, df.shape[0])
+        np.random.shuffle(index_dataset)
+        encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
+
+        cat_df_shuffled = encoder.fit_transform(df.iloc[index_dataset], df.iloc[index_dataset][target_variable])
+        back_cat_df = cat_df_shuffled.sort_index()
+        final_cat_df[categorical_variables] +=  back_cat_df[categorical_variables]
+        
+    final_cat_df[categorical_variables] /= how_many_permutations
     
     how_many_1s = len(df[df[target_variable] == 1])
     alpha = 1
@@ -147,18 +153,15 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     
     for col in categorical_variables:
         unique_cat = list(set(df[col]))
-        final_cat_df[col] +=  back_cat_df[col]
-        final_cat_df[col] /= 2
-    
+
         for category in unique_cat:
             indices = np.where(df[col] == category)[0]
             part_dataset_encoded = cat_df.iloc[indices]
             get_numer = np.sum(part_dataset_encoded[col]) + alpha * prior
             dictionary_cat[category] =  get_numer / (len(indices) + alpha)
             
-            
             part_dataset_encoded_final = final_cat_df.iloc[indices]
-            get_numer = np.sum(part_dataset_encoded_final['Feature_3']) + alpha * prior
+            get_numer = np.sum(part_dataset_encoded_final[col]) + alpha * prior
             dictionary_cat_shuffle[category] =  get_numer / (len(indices) + alpha)     
             
             cat_df_test_difftest[col] = cat_df_test_difftest[col].replace(list(dictionary_cat.keys()), list(dictionary_cat.values()))
@@ -248,8 +251,9 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 # methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
 methods = ['remove_cat','simple','onehot','effect','target','target_w','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target5fold','target10fold','glmm5fold','glmm10fold']
-classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
-
+# methods = ['catboost','catboost_difftest','catboost_shuffle']
+# classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
+classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
 
 ########################################################################
 ######### HEART DATASET    
@@ -399,7 +403,7 @@ for index in range(how_many_cv):
     
     df_test = df.iloc[not_in_randomlist,:]
     df_train = df.iloc[randomlist,:]
-    confusion_matrix = whole_process_categorical(df_train, df_test, categorical_variables, continuous_variables, target_variable, which_dataset)
+    confusion_matrix = whole_process_categorical(df_train, df_test, categorical_variables, continuous_variables, target_variable, which_dataset, 50)
     array_confusion_matrix += np.array(confusion_matrix)
     conf_matrix_list.append(np.array(confusion_matrix))
 

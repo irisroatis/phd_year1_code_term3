@@ -278,6 +278,14 @@ final_cat_df['Feature_3']  /= 2
 
 
 
+
+
+
+
+
+
+
+
 for category in unique_cat:
     indices = np.where(df['Feature_3'] == category)[0]
     part_dataset_encoded = final_cat_df.iloc[indices]

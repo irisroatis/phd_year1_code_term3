@@ -12,11 +12,11 @@ import numpy as np
 import random
 
 mu1 = np.array([0, 0, 0])
-mu2 = np.array([1, 1, 0])
+mu2 = np.array([1, 1, 1])
 sigma1 = np.identity(3)
 sigma2 = np.identity(3)
 how_many_times_repeat = 1
-iterations = 20
+iterations = 2000
 
 testing_data, belonging_classes = generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2, sigma2)
 
@@ -27,7 +27,7 @@ which_column_to_categories = 'Feature_3'
 df = pd.DataFrame(testing_data[0], columns = names_columns)
 df[target_variable] = belonging_classes[0]
 
-how_many_bins = 5
+how_many_bins = 50
 
 bins_col3 = create_bins(df[which_column_to_categories], df[which_column_to_categories], how_many_bins+1, 'fixed_number')
 
