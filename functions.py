@@ -86,6 +86,26 @@ def target_encoding(feature, target, df):
         changed_df[feature] = changed_df[feature].replace([cat], avg_value)
         dictionary_target_encoding[cat] = avg_value
     return changed_df, dictionary_target_encoding
+
+
+def split_train_test(df, target_variable):
+    random.seed(10)
+    how_many_0s = len(df[df[target_variable] == 0])
+    how_many_1s = len(df[df[target_variable] == 1])
+    size = how_many_0s + how_many_1s
+    
+    randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
+    not_in_randomlist = list(set(range(0,size)) - set(randomlist))
+    
+    df_test = df.iloc[not_in_randomlist,:]
+    df_train = df.iloc[randomlist,:]
+    df_train.sort_index(inplace=True)
+    df_train.reset_index(inplace=True, drop = True)
+    df_test.reset_index(inplace=True, drop = True)
+    return df_train, df_test
+
+
+
    
 def generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2, 
                          sigma2):

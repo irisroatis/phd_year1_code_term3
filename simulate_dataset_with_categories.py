@@ -40,6 +40,10 @@ digitized = np.digitize(df[which_column_to_categories],bins_col3)
 df[which_column_to_categories] = digitized
 df[which_column_to_categories] = df[which_column_to_categories].replace(categories, categories_shuffled)
 
-df.to_csv('simulate_categories.csv', index = False)
+df_train, df_test = split_train_test(df, target_variable)
+
+df_train.to_csv('simulate_categories_train.csv', index = None)
+df_test.to_csv('simulate_categories_test.csv', index = None)
 bins_col3.tofile('bins.txt',sep=',')
 np.array(categories_shuffled).tofile('order_cat.txt',sep=',')
+
