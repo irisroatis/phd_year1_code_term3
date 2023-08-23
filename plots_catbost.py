@@ -104,13 +104,31 @@ def catboost_various_methods(df, categorical_variable, store_everything, which_m
             encoded_df.loc[pick.index, categorical_variable+'_lower'] = vector_l1qr
             encoded_df.loc[pick.index, categorical_variable+'_upper'] = vector_u1qr
             dict_for_test_m[cat] = np.mean(vector_m)
-            dict_for_test_lq[cat] = np.percentile(vector_l1qr, q = 25)
-            dict_for_test_uq[cat] = np.percentile(vector_u1qr, q = 75)
+            dict_for_test_lq[cat] = np.mean(vector_l1qr) # np.percentile(vector_l1qr, q = 25)
+            dict_for_test_uq[cat] = np.mean(vector_u1qr) # np.percentile(vector_u1qr, q = 75)
         dict_for_test={'m':dict_for_test_m, 'l': dict_for_test_lq, 'u': dict_for_test_uq}
+        
+    if which_method == 'mean_minmax':
+        dict_for_test_m ={}
+        dict_for_test_min ={}
+        dict_for_test_max ={}
+        for cat in unique_values:
+            pick =  encoded_df[encoded_df[categorical_variable] == cat]
+            vector_m = np.mean(store_everything[cat],axis = 1)
+            vector_min = np.min(store_everything[cat], axis = 1)
+            vector_max = np.max(store_everything[cat], axis = 1)
+            encoded_df.loc[pick.index, categorical_variable] = vector_m
+            encoded_df.loc[pick.index, categorical_variable+'_min'] = vector_min
+            encoded_df.loc[pick.index, categorical_variable+'_max'] = vector_max
+            dict_for_test_m[cat] = np.mean(vector_m)
+            dict_for_test_min[cat] = min(vector_min)
+            dict_for_test_max[cat] = max(vector_max)
+        dict_for_test={'m':dict_for_test_m, 'min': dict_for_test_min, 'max': dict_for_test_max}
+          
     return encoded_df, dict_for_test
 
 
-how_many_permutations = 20
+how_many_permutations = 100
 categorical_variable = 'Feature_3'
 store_everything = multiple_perm(df_train, categorical_variable , how_many_permutations)
 encoded_df, dict_for_test =  catboost_various_methods(df_train, categorical_variable, store_everything, 'mean')
@@ -118,16 +136,30 @@ encoded_df, dict_for_test =  catboost_various_methods(df_train, categorical_vari
 
 encoded_df_3, dict_for_test_3 =  catboost_various_methods(df_train, categorical_variable, store_everything, 'mean_interq')
 
+encoded_df_minmax, dict_for_test_minmax =  catboost_various_methods(df_train, categorical_variable, store_everything, 'mean_minmax')
 
+
+#### initialise all test datasets
 encoded_df_test = df_test.copy()
 encoded_df_test_3 = df_test.copy()
+encoded_df_test_minmax = df_test.copy()
+
 encoded_df_test_3[categorical_variable+'_lower'] = encoded_df_test_3[categorical_variable].copy()
 encoded_df_test_3[categorical_variable+'_upper'] = encoded_df_test_3[categorical_variable].copy()
+
+encoded_df_test_minmax[categorical_variable+'_min'] = encoded_df_test_minmax[categorical_variable].copy()
+encoded_df_test_minmax[categorical_variable+'_max'] = encoded_df_test_minmax[categorical_variable].copy()
+
+
+#### encode test set 
 
 encoded_df_test[categorical_variable].replace(list(dict_for_test.keys()),list(dict_for_test.values()), inplace = True)
 encoded_df_test_3[categorical_variable].replace(list(dict_for_test_3['m'].keys()),list(dict_for_test_3['m'].values()), inplace = True)
 encoded_df_test_3[categorical_variable+'_lower'].replace(list(dict_for_test_3['l'].keys()),list(dict_for_test_3['l'].values()), inplace = True)
 encoded_df_test_3[categorical_variable+'_upper'].replace(list(dict_for_test_3['u'].keys()),list(dict_for_test_3['u'].values()), inplace = True)
+encoded_df_test_minmax[categorical_variable].replace(list(dict_for_test_minmax['m'].keys()),list(dict_for_test_minmax['m'].values()), inplace = True)
+encoded_df_test_minmax[categorical_variable+'_min'].replace(list(dict_for_test_minmax['min'].keys()),list(dict_for_test_minmax['min'].values()), inplace = True)
+encoded_df_test_minmax[categorical_variable+'_max'].replace(list(dict_for_test_minmax['max'].keys()),list(dict_for_test_minmax['max'].values()), inplace = True)
 
 
 X_catboost_mean, y_train =  dataset_to_Xandy(encoded_df, target_variable, only_X = False)
@@ -136,13 +168,17 @@ X_catboost_mean_test, y_test =  dataset_to_Xandy(encoded_df_test, target_variabl
 X_catboost_meaninterq, y_train =  dataset_to_Xandy(encoded_df_3, target_variable, only_X = False)
 X_catboost_meaninterq_test, y_test =  dataset_to_Xandy(encoded_df_test_3, target_variable, only_X = False)
 
+X_catboost_minmax, y_train =  dataset_to_Xandy(encoded_df_minmax, target_variable, only_X = False)
+X_catboost_minmax_test, y_test =  dataset_to_Xandy(encoded_df_test_minmax, target_variable, only_X = False)
+
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
 aucmean = []
 aucmeaninterq = []
+aucminmax = []
 for classifier in classifiers:
     aucmean.append(calc_conf_matrix(X_catboost_mean,y_train,X_catboost_mean_test,y_test, classifier))
     aucmeaninterq.append(calc_conf_matrix(X_catboost_meaninterq,y_train,X_catboost_meaninterq_test,y_test, classifier))
-
+    aucminmax.append(calc_conf_matrix(X_catboost_minmax,y_train,X_catboost_minmax_test,y_test, classifier))
 
 
 

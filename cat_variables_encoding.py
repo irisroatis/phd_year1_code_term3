@@ -133,7 +133,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     dictionary_cat_shuffle = {}
     
     final_cat_df = cat_df.copy()
-    
+    how_many_permutations = 5
     
     for s in range(how_many_permutations):
         index_dataset = np.arange(0, df.shape[0])
@@ -166,8 +166,13 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
             
             cat_df_test_difftest[col] = cat_df_test_difftest[col].replace(list(dictionary_cat.keys()), list(dictionary_cat.values()))
             cat_df_test_shuffle[col] = cat_df_test_shuffle[col].replace(list(dictionary_cat_shuffle.keys()), list(dictionary_cat_shuffle.values()))
-    
-    
+       
+        unique_test_no_train = list(set(df_test[col]) - set(df[col]))
+        
+        for uni in unique_test_no_train:
+            cat_df_test_difftest[cat_df_test_difftest[col] == uni] = cat_df_test_difftest[cat_df_test_difftest[col] == uni].replace(uni, prior)
+            cat_df_test_shuffle[cat_df_test_shuffle[col] == uni] = cat_df_test_shuffle[cat_df_test_shuffle[col] == uni].replace(uni, prior)
+            
     X_cat_test_difftest =  dataset_to_Xandy(cat_df_test_difftest, target_variable, only_X = True)
     X_cat_test_shuffle =  dataset_to_Xandy(cat_df_test_shuffle, target_variable, only_X = True)
     X_cat_shuffle=  dataset_to_Xandy(final_cat_df, target_variable, only_X = True)
@@ -232,7 +237,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
             elif method == 'catboost_shuffle':
                 auc = calc_conf_matrix(X_cat_shuffle,y_train,X_cat_test_shuffle,y_test, classifier)
             elif method =='target10fold':
-                autargetc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
+                auc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
             elif method == 'target5fold':
                 auc = calc_conf_matrix(X_target5,y_train,X_target_test5,y_test, classifier)
             elif method == 'glmm5fold':
@@ -250,7 +255,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 
 # methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
-methods = ['remove_cat','simple','onehot','effect','target','target_w','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle','target5fold','target10fold','glmm5fold','glmm10fold']
+methods = ['remove_cat','simple','onehot','effect','target','target_w','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle'] #'target5fold','target10fold','glmm5fold','glmm10fold']
 # methods = ['catboost','catboost_difftest','catboost_shuffle']
 # classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
@@ -359,14 +364,36 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
 # df = df.reset_index(drop=True)
 
 
+##########################################################################
+
+## Simulated Dataset
+
+# which_dataset = 'Simulated Data'
+# df = pd.read_csv('simulate_categories.csv')
+# categorical_variables = ['Feature_3'] 
+# target_variable = 'target'
+# continuous_variables = ['Feature_1','Feature_2']
 
 
-which_dataset = 'Simulated Data'
-df = pd.read_csv('simulate_categories.csv')
-categorical_variables = ['Feature_3'] 
-target_variable = 'target'
-continuous_variables = ['Feature_1','Feature_2']
 
+##########################################################################
+
+## Adult (income >=50k or <50k)
+
+which_dataset = 'Income Data'
+df = pd.read_csv('ada_prior.csv')
+df.reset_index(inplace=True, drop = True)
+
+
+df = df.drop(['educationNum','fnlwgt'],axis = 1)
+
+categorical_variables = ['workclass','education',
+                         'maritalStatus','occupation','relationship','race','nativeCountry'] 
+binary_cols = ['sex']
+target_variable = 'label'
+continuous_variables = ['age','capitalGain','capitalLoss','hoursPerWeek']
+df[binary_cols] = df[binary_cols].replace(['Male', 'Female'], [1, 0])
+df[target_variable] = df[target_variable].replace([-1], [0])
 
 
 ##########################################################################
@@ -403,6 +430,8 @@ for index in range(how_many_cv):
     
     df_test = df.iloc[not_in_randomlist,:]
     df_train = df.iloc[randomlist,:]
+    
+    
     confusion_matrix = whole_process_categorical(df_train, df_test, categorical_variables, continuous_variables, target_variable, which_dataset, 50)
     array_confusion_matrix += np.array(confusion_matrix)
     conf_matrix_list.append(np.array(confusion_matrix))

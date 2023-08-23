@@ -25,8 +25,9 @@ from functions import *
 from scipy.stats import rankdata
 from kfold_code import *
 
-def catboost(df_train, cat_df, categorical_variables, alpha, prior):
+def catboost(df_train, cat_df, df_test, categorical_variables, alpha, prior):
     dictionary_cat = {}
+    cat_df_test_difftest = df_test.copy()
 
     for col in categorical_variables:
         unique_cat = list(set(df_train[col]))
@@ -38,7 +39,8 @@ def catboost(df_train, cat_df, categorical_variables, alpha, prior):
             dictionary_cat[category] = get_numer / (len(indices) + alpha)
 
         cat_df_test_difftest[col] = cat_df_test_difftest[col].replace(list(dictionary_cat.keys()), list(dictionary_cat.values()))
-    
+       
+        values_in_test_not_train =set(df_train[col]) - set()
     return cat_df_test_difftest
 
 
@@ -120,10 +122,10 @@ cat_df = encoder.fit_transform(df_train, df_train[target_variable])
 
 X_cat,y_train=  dataset_to_Xandy(cat_df, target_variable, only_X = False)
 
-cat_df_test_difftest = df_test.copy()
-classifier = 'logistic'
 
-cat_df_test_difftest = catboost(df_train, cat_df, categorical_variables,alpha, prior)
+classifier = 'kNN'
+
+cat_df_test_difftest = catboost(df_train, cat_df, df_test, categorical_variables,alpha, prior)
 X_cat_test_difftest, y_test =  dataset_to_Xandy(cat_df_test_difftest, target_variable, only_X = False)
 y_predict = calc_conf_matrix(X_cat,y_train,X_cat_test_difftest,y_test, classifier)
     
