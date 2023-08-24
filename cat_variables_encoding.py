@@ -75,6 +75,11 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_woe_test =  dataset_to_Xandy(woe_df_test, target_variable, only_X = True)
     
     
+    how_many_1s = len(df[df[target_variable] == 1])
+    alpha = 1
+    prior = how_many_1s / df.shape[0]
+
+
 
     ##### the target encoded dataset 
     
@@ -86,6 +91,11 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
         target_df, dict_target =  target_encoding(col, target_variable, target_df)
         target_df_test[col] = target_df_test[col].replace(list(dict_target.keys()), list(dict_target.values()))
         
+        unique_test_no_train = list(set(df_test[col]) - set(df[col]))
+    
+        for uni in unique_test_no_train:
+            target_df_test[target_df_test[col] == uni] = target_df_test[target_df_test[col] == uni].replace(uni, prior)
+            
         
     X_target =  dataset_to_Xandy(target_df, target_variable, only_X = True)
     X_target_test =  dataset_to_Xandy(target_df_test, target_variable, only_X = True)
@@ -146,9 +156,6 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
         
     final_cat_df[categorical_variables] /= how_many_permutations
     
-    how_many_1s = len(df[df[target_variable] == 1])
-    alpha = 1
-    prior = how_many_1s / df.shape[0]
     
     
     for col in categorical_variables:
@@ -255,7 +262,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 
 # methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
-methods = ['remove_cat','simple','onehot','effect','target','target_w','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle'] #'target5fold','target10fold','glmm5fold','glmm10fold']
+methods = ['remove_cat','simple','onehot','effect','target','target_w','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle', 'target5fold','target10fold','glmm5fold','glmm10fold']
 # methods = ['catboost','catboost_difftest','catboost_shuffle']
 # classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']

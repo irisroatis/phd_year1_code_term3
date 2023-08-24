@@ -41,6 +41,10 @@ def k_fold_target_encoding(df, df_test, categorical_variables, target_variable, 
    
     modified_df = df.copy()
     modified_df_test = df_test.copy()
+    
+    how_many_1s = len(df[df[target_variable] == 1])
+    prior =  how_many_1s / df.shape[0]
+    
     for categorical_variable in categorical_variables:
    
         new_column = categorical_variable + '_encoded'
@@ -67,12 +71,19 @@ def k_fold_target_encoding(df, df_test, categorical_variables, target_variable, 
                encoder.fit(df_train, df_train[target_variable])
                modified_df[new_column].iloc[test_index] = encoder.transform( df_train_test)[categorical_variable]
 
-    modified_df[new_column] =  modified_df[new_column].replace([np.nan],[np.nanmean(modified_df[target_variable])])
-    for cat in categories:
-        which_cat = modified_df[modified_df[categorical_variable] == cat]
-        avg_value = which_cat[new_column].mean()
-        modified_df_test[new_column] =  modified_df_test[new_column].replace([cat], avg_value)
-   
+        modified_df[new_column] =  modified_df[new_column].replace([np.nan],[np.nanmean(modified_df[target_variable])])
+        for cat in categories:
+            which_cat = modified_df[modified_df[categorical_variable] == cat]
+            avg_value = which_cat[new_column].mean()
+            modified_df_test[new_column] =  modified_df_test[new_column].replace([cat], avg_value)
+       
+        unique_test_no_train = list(set(df_test[categorical_variable]) - set(df[categorical_variable]))
+        
+        for uni in unique_test_no_train:
+            modified_df_test[modified_df_test[categorical_variable] == uni] = modified_df_test[modified_df_test[categorical_variable] == uni].replace(uni, prior)
+            
+        
+       
     modified_df.drop(columns = categorical_variables, inplace=True)
     modified_df_test.drop(columns = categorical_variables, inplace=True)
    
