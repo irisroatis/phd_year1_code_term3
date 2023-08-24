@@ -129,6 +129,28 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     X_leave=  dataset_to_Xandy(leave_df, target_variable, only_X = True)
     X_leave_test =  dataset_to_Xandy(leave_df_test, target_variable, only_X = True)
     
+    
+    dictionary_loo = {}
+    
+    
+    leave_df_difftest = df_test.copy()
+    
+    for col in categorical_variables:
+        unique_cat = list(set(df[col]))
+        for category in unique_cat:
+            indices = np.where(df[col] == category)[0]
+            part_dataset_encoded = leave_df.iloc[indices]
+            get_number = np.sum(part_dataset_encoded[col]) + alpha * prior
+            dictionary_loo[category] = get_number / (alpha + len(indices)) 
+            
+            leave_df_difftest[col] = leave_df_difftest[col].replace(list(dictionary_loo.keys()), list(dictionary_loo.values()))
+            
+        unique_test_no_train = list(set(df_test[col]) - set(df[col]))
+         
+        for uni in unique_test_no_train:
+            leave_df_difftest[leave_df_difftest[col] == uni] = leave_df_difftest[leave_df_difftest[col] == uni].replace(uni, prior)
+            
+    X_leave_difftest =  dataset_to_Xandy(leave_df_difftest, target_variable, only_X = True)
         
     ##### the CatBoost encoded dataset 
     encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
@@ -143,7 +165,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     dictionary_cat_shuffle = {}
     
     final_cat_df = cat_df.copy()
-    how_many_permutations = 5
+    how_many_permutations = 50
     
     for s in range(how_many_permutations):
         index_dataset = np.arange(0, df.shape[0])
@@ -186,23 +208,23 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     
     
     #### the 10-Fold Target Encoding
-    modified_df10, modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
+    modified_df10, modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='TAR')
     X_target10 =  dataset_to_Xandy(modified_df10, target_variable, only_X = True)
     X_target_test10 =  dataset_to_Xandy(modified_df_test10, target_variable, only_X = True)
 
     #### the 5-Fold Target Encoding
-    modified_df5, modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='target')
+    modified_df5, modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='TAR')
     X_target5 =  dataset_to_Xandy(modified_df5, target_variable, only_X = True)
     X_target_test5 =  dataset_to_Xandy(modified_df_test5, target_variable, only_X = True)
 
 
     #### the 10-Fold GLMM Encoding
-    glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='glmm')
+    glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='GLMM')
     X_glmm10 =  dataset_to_Xandy(glmm_modified_df10, target_variable, only_X = True)
     X_glmm_test10 =  dataset_to_Xandy(glmm_modified_df_test10, target_variable, only_X = True)
 
     #### the 5-Fold GLMM Encoding
-    glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='glmm')
+    glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='GLMM')
     X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
     X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
 
@@ -219,37 +241,39 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
             
             print(str(method) + ' '+str(classifier))
         
-            if method == 'remove_cat':
+            if method == 'NO_CAT':
                 auc = calc_conf_matrix(X_nocat,y_train,X_test_nocat,y_test,classifier)
-            elif method == 'simple':
+            elif method == 'ORD':
                 auc =  calc_conf_matrix(X_simple,y_train,X_simple_test, y_test, classifier)
-            elif method == 'onehot':
+            elif method == 'OH':
                 auc = calc_conf_matrix(X_onehot,y_train,X_onehot_test,y_test, classifier)
-            elif method == 'effect':
+            elif method == 'EFF':
                 auc = calc_conf_matrix(X_effect,y_train,X_effect_test,y_test, classifier)
-            elif method == 'woe':
+            elif method == 'WOE':
                 auc = calc_conf_matrix(X_woe,y_train,X_woe_test,y_test, classifier)
-            elif method == 'target':
+            elif method == 'TAR':
                 auc = calc_conf_matrix(X_target,y_train,X_target_test,y_test, classifier)
-            elif method == 'target_w':
+            elif method == 'TAR_W':
                 auc = calc_conf_matrix(X_target_w,y_train,X_target_w_test,y_test, classifier)
-            elif method == 'glmm':
+            elif method == 'GLMM':
                 auc = calc_conf_matrix(X_glmm,y_train,X_glmm_test,y_test, classifier)
-            elif method == 'leave':
+            elif method == 'LOO':
                 auc = calc_conf_matrix(X_leave,y_train,X_leave_test,y_test, classifier)
-            elif method == 'catboost':
+            elif method == 'LOO_T':
+                auc = calc_conf_matrix(X_leave,y_train,X_leave_difftest,y_test, classifier)
+            elif method == 'CAT':
                 auc = calc_conf_matrix(X_cat,y_train,X_cat_test,y_test, classifier)
-            elif method == 'catboost_difftest':
+            elif method == 'CAT_T':
                 auc = calc_conf_matrix(X_cat,y_train,X_cat_test_difftest,y_test, classifier)
-            elif method == 'catboost_shuffle':
+            elif method == 'CAT_S_5':
                 auc = calc_conf_matrix(X_cat_shuffle,y_train,X_cat_test_shuffle,y_test, classifier)
-            elif method =='target10fold':
+            elif method =='TAR_10':
                 auc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
-            elif method == 'target5fold':
+            elif method == 'TAR_5':
                 auc = calc_conf_matrix(X_target5,y_train,X_target_test5,y_test, classifier)
-            elif method == 'glmm5fold':
+            elif method == 'GLMM_5':
                 auc = calc_conf_matrix(X_glmm5,y_train,X_glmm_test5,y_test, classifier)
-            elif method == 'glmm10fold':
+            elif method == 'GLMM_10':
                 auc = calc_conf_matrix(X_glmm10,y_train,X_glmm_test10,y_test, classifier)
  
             this.append(np.round(auc,3))
@@ -261,9 +285,13 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 
 
-# methods = ['simple','onehot','effect','target','woe','glmm','leave','catboost']
-methods = ['remove_cat','simple','onehot','effect','target','target_w','woe','glmm','leave','catboost','catboost_difftest','catboost_shuffle', 'target5fold','target10fold','glmm5fold','glmm10fold']
-# methods = ['catboost','catboost_difftest','catboost_shuffle']
+
+methods = ['NO_CAT','ORD','OH','EFF','TAR','TAR_W','WOE','GLMM','LOO','LOO_T','CAT','CAT_T','CAT_S_5', 'TAR_5','TAR_10','GLMM_5','GLMM_10']
+# methods = ['ORD','OH','EFF','TAR','TAR_W','WOE','GLMM','LOO','LOO_T','CAT','CAT_T','CAT_S_5', 'TAR_5','TAR_10','GLMM_5','GLMM_10']
+
+
+
+
 # classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
 
@@ -387,20 +415,38 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
 
 ## Adult (income >=50k or <50k)
 
-which_dataset = 'Income Data'
-df = pd.read_csv('ada_prior.csv')
-df.reset_index(inplace=True, drop = True)
+# which_dataset = 'Income Prediction'
+# df = pd.read_csv('ada_prior.csv')
+# df.reset_index(inplace=True, drop = True)
 
 
-df = df.drop(['educationNum','fnlwgt'],axis = 1)
+# df = df.drop(['educationNum','fnlwgt'],axis = 1)
 
-categorical_variables = ['workclass','education',
-                         'maritalStatus','occupation','relationship','race','nativeCountry'] 
-binary_cols = ['sex']
-target_variable = 'label'
-continuous_variables = ['age','capitalGain','capitalLoss','hoursPerWeek']
-df[binary_cols] = df[binary_cols].replace(['Male', 'Female'], [1, 0])
-df[target_variable] = df[target_variable].replace([-1], [0])
+# categorical_variables = ['workclass','education',
+#                          'maritalStatus','occupation','relationship','race','nativeCountry'] 
+# binary_cols = ['sex']
+# target_variable = 'label'
+# continuous_variables = ['age','capitalGain','capitalLoss','hoursPerWeek']
+# df[binary_cols] = df[binary_cols].replace(['Male', 'Female'], [1, 0])
+# df[target_variable] = df[target_variable].replace([-1], [0])
+
+##########################################################################
+
+##### Australian credit approval 
+
+which_dataset = 'Australian Credit Approval'
+df = pd.read_csv('australian.csv')
+df.columns = df.columns.str.replace("'","")
+
+
+categorical_variables = ['A4','A5','A6','A12'] 
+binary_cols = ['A1','A8', 'A9', 'A11']
+target_variable = 'A15'
+continuous_variables = ['A2','A3','A7','A10','A13', 'A14']
+
+
+
+
 
 
 ##########################################################################
@@ -410,6 +456,8 @@ plt.figure()
 df[target_variable].value_counts().plot(kind='bar')
 plt.title('Test how many target 0 vs 1, dataset: '+ which_dataset)
 plt.show()
+
+
 
 for key in df.keys():
     print(df[key].value_counts())
@@ -422,6 +470,9 @@ for key in df.keys():
 how_many_0s = len(df[df[target_variable] == 0])
 how_many_1s = len(df[df[target_variable] == 1])
 size = how_many_0s + how_many_1s
+
+print('Percentage of ones:' +str(how_many_1s /size * 100 ))
+
 
 how_many_cv = 5
 
@@ -484,7 +535,7 @@ from prettytable import PrettyTable
 # Specify the Column Names while initializing the Table
 myTable = PrettyTable([which_dataset]+classifiers+['MEAN SCORE'])
 
-colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered','black','purple','magenta']
+colours = ['tab:blue','tab:orange','tab:green','tab:red', 'tab:pink','tab:brown','tab:purple','tab:cyan', 'tab:olive','tab:gray','blue','gold','orangered','black','purple','magenta','green']
 
 
 how_many_methods = len(methods)
