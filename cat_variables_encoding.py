@@ -24,6 +24,7 @@ import seaborn as sns
 from functions import *
 from scipy.stats import rankdata
 from kfold_code import *
+from dealing_datasets import *
 
 
 def whole_process_categorical(df, df_test, categorical_variables, continuous_variables, target_variable, which_dataset, how_many_permutations):
@@ -165,7 +166,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     dictionary_cat_shuffle = {}
     
     final_cat_df = cat_df.copy()
-    how_many_permutations = 50
+    how_many_permutations = 10
     
     for s in range(how_many_permutations):
         index_dataset = np.arange(0, df.shape[0])
@@ -288,173 +289,31 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
 
 methods = ['NO_CAT','ORD','OH','EFF','TAR','TAR_W','WOE','GLMM','LOO','LOO_T','CAT','CAT_T','CAT_S_5', 'TAR_5','TAR_10','GLMM_5','GLMM_10']
 # methods = ['ORD','OH','EFF','TAR','TAR_W','WOE','GLMM','LOO','LOO_T','CAT','CAT_T','CAT_S_5', 'TAR_5','TAR_10','GLMM_5','GLMM_10']
-
-
-
-
 # classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost','naive','lasso']
 classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
 
-########################################################################
-######### HEART DATASET    
-
-# which_dataset = 'Heart Ilness'
-# df = pd.read_csv('heart.csv')
-# categorical_variables = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
-# target_variable = 'target' # Making sure the name of the target variable is known
-# continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
-# binary_variables = ['sex','fbs','exang']
-
-# df.head()
-# #########################################################################
-# ######### CHURN
-
-# which_dataset = 'Churn'
-# df = pd.read_csv('churn.csv')
-# categorical_variables = ['state','area_code','number_customer_service_calls'] # Putting in this all the categorical columns
-# target_variable = 'class' # Making sure the name of the target variable is known
-# binary_variables = ['international_plan','voice_mail_plan']
-# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
-
-
-#########################################################################
-######### AMAZON
-
-# which_dataset = 'Amazon_employee_access'
-# df = pd.read_csv('amazon.csv')
-# target_variable = 'target' # Making sure the name of the target variable is known
-# categorical_variables = list(set(df.keys()) - set([target_variable]))
-# df = pick_only_some(df, target_variable, 1000)
-# df = df.reset_index(drop=True)
-
-#########################################################################
-######### MUSHROOM
-
-# which_dataset = 'Mushroom'
-# colnames = ['target','cap_shape','cap_surface','cap_color','bruises','odor','gill_attachment','gill_spacing','gill_size','gill_colour','stalk_shape','stalk_root','stalk_sur_ab_ring','stalk_sur_bw_ring','stalk_col_ab_ring','stalk_col_bw_ring','veil_type','veil_colour','ring_number','ring_type','spore_print_colour','population','habitat']
-# df = pd.read_csv('mushrooms.data', names = colnames)
-# target_variable = 'target' # Making sure the name of the target variable is known
-# categorical_variables = colnames
-# continuous_variables = []
-# df[target_variable] = df[target_variable].replace(['e', 'p'], [1, 0])
-
-
-#########################################################################
-######### CLICK PREDICTION ADDS
-
-# which_dataset = 'Click Prediction'
-# df = pd.read_csv('click_prediction.csv')
-# target_variable = 'click' # Making sure the name of the target variable is known
-# categorical_variables = ['url_hash', 'ad_id', 'advertiser_id', 'query_id', 'keyword_id', 'title_id', 'description_id', 'user_id']
-# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
-# df = pick_only_some(df, target_variable, 1000)
-# df = df.reset_index(drop=True)
-
-
-#########################################################################
-######## Internet
-
-# which_dataset = 'Internet Usage'
-# df = pd.read_csv('kdd_internet_usage.csv')
-# target_variable = 'Who_Pays_for_Access_Work' # Making sure the name of the target variable is known
-# categorical_variables = ['Actual_Time', 'Community_Building', 'Country', 'Education_Attainment', 'Falsification_of_Information', 'Major_Geographical_Location', 'Major_Occupation', 'Marital_Status','Most_Import_Issue_Facing_the_Internet','Opinions_on_Censorship','Primary_Computing_Platform','Primary_Language','Primary_Place_of_WWW_Access','Race','Registered_to_Vote',
-#                           'Sexual_Preference','Web_Ordering','Web_Page_Creation','Age']
-# continuous_variables = []
-# df['Web_Ordering'] = df['Web_Ordering'].replace(['Yes', 'No'], [1, 0])
-# df['Registered_to_Vote'] = df['Registered_to_Vote'].replace(['Yes', 'No'], [1, 0])
-
-# binary_variables = list(set(df.keys()) - set(continuous_variables + categorical_variables + [target_variable]))
-# df = pick_only_some(df, target_variable, 1000)
-# df = df.reset_index(drop=True)
-
-
-
-#########################################################################
-######## Car Insurance
-
-# which_dataset = 'Car Insurance'
-# df = pd.read_csv('car_insurance.csv')
-# df = df.drop('policy_id',axis = 1)
-# categorical_variables = ['area_cluster','make', 'segment','model', 'fuel_type','max_torque','max_power','engine_type','airbags','steering_type','ncap_rating'] # Putting in this all the categorical columns
-# target_variable = 'is_claim' # Making sure the name of the target variable is known
-
-# binary_cols = ['gear_box','is_esc','is_adjustable_steering','is_tpms',
-#                 'is_parking_sensors','is_parking_camera','rear_brakes_type',
-#                 'cylinder','transmission_type','is_front_fog_lights'
-#                 ,'is_rear_window_wiper','is_rear_window_washer'
-#                 ,'is_rear_window_defogger', 'is_brake_assist', 'is_power_door_locks',
-#                 'is_central_locking','is_power_steering','is_driver_seat_height_adjustable',
-#                 'is_day_night_rear_view_mirror','is_ecw','is_speed_alert']
-
-
-# continuous_variables = ['policy_tenure', 'age_of_car', 'age_of_policyholder',
-#         'population_density', 'displacement','turning_radius',
-#         'length', 'width', 'height', 'gross_weight']
-
-# df[binary_cols] = df[binary_cols].replace(['Yes', 'No'], [1, 0])
-# df['rear_brakes_type'] = df['rear_brakes_type'].replace(['Drum', 'Disc'], [1, 0])
-# df['transmission_type'] = df['transmission_type'].replace(['Automatic', 'Manual'], [1, 0])
-
-# df = pick_only_some(df, target_variable, 1000)
-# df = df.reset_index(drop=True)
-
 
 ##########################################################################
 
-## Simulated Dataset
-
-# which_dataset = 'Simulated Data'
-# df = pd.read_csv('simulate_categories.csv')
-# categorical_variables = ['Feature_3'] 
-# target_variable = 'target'
-# continuous_variables = ['Feature_1','Feature_2']
-
-
-
-##########################################################################
-
-## Adult (income >=50k or <50k)
-
-# which_dataset = 'Income Prediction'
-# df = pd.read_csv('ada_prior.csv')
-# df.reset_index(inplace=True, drop = True)
-
-
-# df = df.drop(['educationNum','fnlwgt'],axis = 1)
-
-# categorical_variables = ['workclass','education',
-#                          'maritalStatus','occupation','relationship','race','nativeCountry'] 
-# binary_cols = ['sex']
-# target_variable = 'label'
-# continuous_variables = ['age','capitalGain','capitalLoss','hoursPerWeek']
-# df[binary_cols] = df[binary_cols].replace(['Male', 'Female'], [1, 0])
-# df[target_variable] = df[target_variable].replace([-1], [0])
-
-##########################################################################
-
-##### Australian credit approval 
-
-which_dataset = 'Australian Credit Approval'
-df = pd.read_csv('australian.csv')
-df.columns = df.columns.str.replace("'","")
-
-
-categorical_variables = ['A4','A5','A6','A12'] 
-binary_cols = ['A1','A8', 'A9', 'A11']
-target_variable = 'A15'
-continuous_variables = ['A2','A3','A7','A10','A13', 'A14']
-
+## Pick dataset
+which_dataset = 'Good/bad Credit Risks'
+df, categorical_variables, continuous_variables, binary_cols, target_variable = dataset_variables(which_dataset)
 
 
 
 
 
 ##########################################################################
+
+how_many_0s = len(df[df[target_variable] == 0])
+how_many_1s = len(df[df[target_variable] == 1])
+size = how_many_0s + how_many_1s
+
 
 
 plt.figure()
 df[target_variable].value_counts().plot(kind='bar')
-plt.title('Test how many target 0 vs 1, dataset: '+ which_dataset)
+plt.title('Test how many target 0 vs 1, dataset: '+ which_dataset+'\n Percentange of ones:'+str(how_many_1s /size * 100 ))
 plt.show()
 
 
@@ -465,13 +324,6 @@ for key in df.keys():
 
 
 ##########################################################################
-
-
-how_many_0s = len(df[df[target_variable] == 0])
-how_many_1s = len(df[df[target_variable] == 1])
-size = how_many_0s + how_many_1s
-
-print('Percentage of ones:' +str(how_many_1s /size * 100 ))
 
 
 how_many_cv = 5
@@ -573,7 +425,7 @@ include_means_conf[-1,-1]  =  np.nan
 
 
 plt.figure(figsize=(10,7))
-g = sns.heatmap(include_means_conf, annot=True, fmt=".5f")
+g = sns.heatmap(include_means_conf, annot=True, fmt=".5f",cmap='YlGnBu')
 g.set_xticklabels(classifiers+['MEAN'], rotation = 45)
 g.set_yticklabels(methods+['MEAN'], rotation = 45)
 plt.title('Plot AUC, Dataset: ' + str(which_dataset) )

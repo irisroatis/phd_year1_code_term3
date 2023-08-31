@@ -37,10 +37,13 @@ def catboost(df_train, cat_df, df_test, categorical_variables, alpha, prior):
             part_dataset_encoded = cat_df.iloc[indices]
             get_numer = np.sum(part_dataset_encoded[col]) + alpha * prior
             dictionary_cat[category] = get_numer / (len(indices) + alpha)
+            
+        values_in_test_not_train =set(df_test[col]) - set(df_train[col])
+        for val in values_in_test_not_train:
+            dictionary_cat[val] = prior
 
         cat_df_test_difftest[col] = cat_df_test_difftest[col].replace(list(dictionary_cat.keys()), list(dictionary_cat.values()))
        
-        values_in_test_not_train =set(df_train[col]) - set()
     return cat_df_test_difftest
 
 
@@ -74,14 +77,47 @@ def calc_conf_matrix(X_train,y_train,X_test, y_test,classifier):
 
 
 
-which_dataset = 'Simulated Data'
-df = pd.read_csv('simulate_categories.csv')
-categorical_variables = ['Feature_3'] 
-target_variable = 'target'
-continuous_variables = ['Feature_1','Feature_2']
+# which_dataset = 'Simulated Data'
+# df = pd.read_csv('simulate_categories.csv')
+# categorical_variables = ['Feature_3'] 
+# target_variable = 'target'
+# continuous_variables = ['Feature_1','Feature_2']
 
-bins = np.loadtxt('bins.txt', delimiter= ',')
-order_cat = np.loadtxt('order_cat.txt', delimiter= ',')
+# bins = np.loadtxt('bins.txt', delimiter= ',')
+# order_cat = np.loadtxt('order_cat.txt', delimiter= ',')
+
+
+
+########## Income Prediction
+# which_dataset = 'Income Prediction'
+# df = pd.read_csv('ada_prior.csv')
+# df.reset_index(inplace=True, drop = True)
+
+
+# df = df.drop(['educationNum','fnlwgt'],axis = 1)
+
+# categorical_variables = ['workclass','education',
+#                           'maritalStatus','occupation','relationship','race','nativeCountry'] 
+# binary_cols = ['sex']
+# target_variable = 'label'
+# continuous_variables = ['age','capitalGain','capitalLoss','hoursPerWeek']
+# df[binary_cols] = df[binary_cols].replace(['Male', 'Female'], [1, 0])
+# df[target_variable] = df[target_variable].replace([-1], [0])
+
+
+####### AUSTRALIAN CREDIT
+which_dataset = 'Australian Credit Approval'
+df = pd.read_csv('australian.csv')
+df.columns = df.columns.str.replace("'","")
+
+
+categorical_variables = ['A4','A5','A6','A12'] 
+binary_cols = ['A1','A8', 'A9', 'A11']
+target_variable = 'A15'
+continuous_variables = ['A2','A3','A7','A10','A13', 'A14']
+
+
+
 
 # list_cat = ['A','A','A','A','B','B','B','C','C','D']
 # list_target = np.array([0,1,0,1,0,1,0,1,0,1])
@@ -104,26 +140,24 @@ not_in_randomlist = list(set(range(0,size)) - set(randomlist))
 df_test = df.iloc[not_in_randomlist,:]
 df_train = df.iloc[randomlist,:]
 df_train.sort_index(inplace=True)
-df_train.reset_index(inplace=True)
-df_test.reset_index(inplace=True)
+df_train.reset_index(inplace=True, drop  = True)
+df_test.reset_index(inplace=True, drop  = True)
 alpha = 1
 prior = how_many_1s / df_train.shape[0]
 
 
 
 
-how_many_permutations = 100
-
+how_many_permutations = 2000
+classifier = 'logistic'
 
 
 ##### the CatBoost encoded dataset 
 encoder = ce.cat_boost.CatBoostEncoder(cols=categorical_variables,verbose=False)
 cat_df = encoder.fit_transform(df_train, df_train[target_variable])
-
 X_cat,y_train=  dataset_to_Xandy(cat_df, target_variable, only_X = False)
 
 
-classifier = 'kNN'
 
 cat_df_test_difftest = catboost(df_train, cat_df, df_test, categorical_variables,alpha, prior)
 X_cat_test_difftest, y_test =  dataset_to_Xandy(cat_df_test_difftest, target_variable, only_X = False)
@@ -142,12 +176,35 @@ for perm in range(how_many_permutations):
     cat_df_shuffled = encoder.fit_transform(df_train.iloc[index_dataset], df_train.iloc[index_dataset][target_variable])
     cat_df_shuffled.sort_index(inplace = True)
     
-    cat_df_test_difftest = catboost(df_train, cat_df_shuffled, categorical_variables,alpha, prior)
+    cat_df_test_difftest = catboost(df_train, cat_df_shuffled,df_test, categorical_variables,alpha, prior)
     X_cat_test_difftest, y_test =  dataset_to_Xandy(cat_df_test_difftest, target_variable, only_X = False)
     y_predict = calc_conf_matrix(X_cat,y_train,X_cat_test_difftest,y_test, classifier)
     
     all_predictions_test[:,perm+1] = y_predict
     
-probabilities_of_one = np.mean(all_predictions_test , axis = 1)
     
+    
+    
+see = np.arange(0, 2000, 10)
+accuracies = []
+
+for i in see:
+    
+    
+    probabilities_of_one = np.mean(all_predictions_test[:,:i] , axis = 1)
+    
+    classes_assigned = probabilities_of_one * 1.0
+    
+    for entry in range(len(classes_assigned)):
+        if classes_assigned[entry] > 0.5:
+            classes_assigned[entry] = 1
+        else: 
+            classes_assigned[entry] = 0
+    
+    correct = (classes_assigned == df_test[target_variable])
+    accuracies.append(  correct.sum() / correct.size )
+    
+plt.plot(see, accuracies)
+plt.title('Dataset:' + which_dataset)
+plt.show()
     
