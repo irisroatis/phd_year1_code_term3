@@ -77,14 +77,14 @@ def calc_conf_matrix(X_train,y_train,X_test, y_test,classifier):
 
 
 
-# which_dataset = 'Simulated Data'
-# df = pd.read_csv('simulate_categories.csv')
-# categorical_variables = ['Feature_3'] 
-# target_variable = 'target'
-# continuous_variables = ['Feature_1','Feature_2']
+which_dataset = 'Simulated Data'
+df = pd.read_csv('simulate_categories.csv')
+categorical_variables = ['Feature_1'] 
+target_variable = 'target'
+continuous_variables = []
 
-# bins = np.loadtxt('bins.txt', delimiter= ',')
-# order_cat = np.loadtxt('order_cat.txt', delimiter= ',')
+bins = np.loadtxt('bins.txt', delimiter= ',')
+order_cat = np.loadtxt('order_cat.txt', delimiter= ',')
 
 
 
@@ -106,15 +106,15 @@ def calc_conf_matrix(X_train,y_train,X_test, y_test,classifier):
 
 
 ####### AUSTRALIAN CREDIT
-which_dataset = 'Australian Credit Approval'
-df = pd.read_csv('australian.csv')
-df.columns = df.columns.str.replace("'","")
+# which_dataset = 'Australian Credit Approval'
+# df = pd.read_csv('australian.csv')
+# df.columns = df.columns.str.replace("'","")
 
 
-categorical_variables = ['A4','A5','A6','A12'] 
-binary_cols = ['A1','A8', 'A9', 'A11']
-target_variable = 'A15'
-continuous_variables = ['A2','A3','A7','A10','A13', 'A14']
+# categorical_variables = ['A4','A5','A6','A12'] 
+# binary_cols = ['A1','A8', 'A9', 'A11']
+# target_variable = 'A15'
+# continuous_variables = ['A2','A3','A7','A10','A13', 'A14']
 
 
 
@@ -148,7 +148,7 @@ prior = how_many_1s / df_train.shape[0]
 
 
 
-how_many_permutations = 2000
+how_many_permutations = 200
 classifier = 'logistic'
 
 
@@ -185,26 +185,26 @@ for perm in range(how_many_permutations):
     
     
     
-see = np.arange(0, 2000, 10)
-accuracies = []
+# see = np.arange(0, 2000, 10)
+# accuracies = []
 
-for i in see:
+# for i in see:
     
     
-    probabilities_of_one = np.mean(all_predictions_test[:,:i] , axis = 1)
+#     probabilities_of_one = np.mean(all_predictions_test[:,:i] , axis = 1)
     
-    classes_assigned = probabilities_of_one * 1.0
+#     classes_assigned = probabilities_of_one * 1.0
     
-    for entry in range(len(classes_assigned)):
-        if classes_assigned[entry] > 0.5:
-            classes_assigned[entry] = 1
-        else: 
-            classes_assigned[entry] = 0
+#     for entry in range(len(classes_assigned)):
+#         if classes_assigned[entry] > 0.5:
+#             classes_assigned[entry] = 1
+#         else: 
+#             classes_assigned[entry] = 0
     
-    correct = (classes_assigned == df_test[target_variable])
-    accuracies.append(  correct.sum() / correct.size )
+#     correct = (classes_assigned == df_test[target_variable])
+#     accuracies.append(  correct.sum() / correct.size )
     
-plt.plot(see, accuracies)
-plt.title('Dataset:' + which_dataset)
-plt.show()
+# plt.plot(see, accuracies)
+# plt.title('Dataset:' + which_dataset)
+# plt.show()
     

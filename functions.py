@@ -23,16 +23,27 @@ import numpy as np
 from scipy.stats import norm
 import seaborn as sns
 
+
+
+def standardise(X):
+    return (X - np.mean(X)) / np.std(X)
+
+def standardise_cols_dataset(X, cols):
+    for col in cols:
+        X[col] = standardise(X[col])
+    return X
+
+
 def dataset_to_Xandy(dataset, target_variable, only_X = True):
     X = dataset.loc[:, dataset.columns != target_variable]
     y = dataset.loc[:, dataset.columns == target_variable]
+
     if only_X:
         return X
     else:
         return X, y
 
-def standardise(X):
-    return (X - np.mean(X)) / np.std(X)
+
 
 def split_dataset(X,y, randomlist, not_in_randomlist):
     X_train = X.iloc[randomlist,:]
@@ -88,8 +99,8 @@ def target_encoding(feature, target, df):
     return changed_df, dictionary_target_encoding
 
 
-def split_train_test(df, target_variable):
-    random.seed(10)
+def split_train_test(df, target_variable, indices_test = False):
+    
     how_many_0s = len(df[df[target_variable] == 0])
     how_many_1s = len(df[df[target_variable] == 1])
     size = how_many_0s + how_many_1s
@@ -102,8 +113,10 @@ def split_train_test(df, target_variable):
     df_train.sort_index(inplace=True)
     df_train.reset_index(inplace=True, drop = True)
     df_test.reset_index(inplace=True, drop = True)
-    return df_train, df_test
-
+    if indices_test:
+        return df_train, df_test, not_in_randomlist
+    else:
+        return df_train, df_test
 
 
    
@@ -133,6 +146,37 @@ def generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2,
                 else:
                     random_simulation[itera,] = np.random.multivariate_normal(mu2, sigma2)
             which_class_list[itera,] = which_normal
+        
+        testing_data.append(random_simulation)
+        belonging_classes.append(which_class_list)
+      
+    
+    return testing_data, belonging_classes
+
+
+
+   
+def generating_test_data_uniform(how_many_times_repeat, iterations, low, high, first, 
+                         second):
+
+    testing_data=[]
+    belonging_classes=[]
+
+    for repeat in range(how_many_times_repeat):
+
+        random_simulation = np.zeros((iterations,))
+        which_class_list = np.zeros((iterations,))
+        
+        for itera in range(iterations):
+
+            which_distr= random.randint(0,1)
+       
+            if which_distr == 0:
+                random_simulation[itera,] = np.random.uniform(low, high)
+            else:
+                random_simulation[itera,] = np.random.beta(first, second)
+       
+            which_class_list[itera,] = which_distr
         
         testing_data.append(random_simulation)
         belonging_classes.append(which_class_list)

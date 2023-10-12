@@ -41,11 +41,17 @@ def dataset_variables(which_dataset):
     elif which_dataset == 'Mushroom':
         colnames = ['target','cap_shape','cap_surface','cap_color','bruises','odor','gill_attachment','gill_spacing','gill_size','gill_colour','stalk_shape','stalk_root','stalk_sur_ab_ring','stalk_sur_bw_ring','stalk_col_ab_ring','stalk_col_bw_ring','veil_type','veil_colour','ring_number','ring_type','spore_print_colour','population','habitat']
         df = pd.read_csv('mushrooms.data', names = colnames)
+        df = df.drop(['veil_type'],axis = 1)
         target_variable = 'target' # Making sure the name of the target variable is known
-        categorical_variables = colnames
+        binary_variables = ['stalk_shape','gill_size','gill_spacing','gill_attachment','bruises']
         continuous_variables = []
         df[target_variable] = df[target_variable].replace(['e', 'p'], [1, 0])
-
+        categorical_variables  = list(set(df.keys()) - set(continuous_variables + [target_variable] + binary_cols))
+        df[stalk_shape] = df[stalk_shape].replace(['t','e'], [1,0])
+        
+        
+        
+        
     ######### CLICK PREDICTION ADDS
     elif which_dataset == 'Click Prediction':
         df = pd.read_csv('click_prediction.csv')
@@ -68,6 +74,7 @@ def dataset_variables(which_dataset):
         binary_variables = list(set(df.keys()) - set(continuous_variables + categorical_variables + [target_variable]))
         df = pick_only_some(df, target_variable, 1000)
         df = df.reset_index(drop=True)
+        binary_cols = []
         
     ######## Car Insurance
     elif which_dataset == 'Car Insurance':    
@@ -102,6 +109,24 @@ def dataset_variables(which_dataset):
         categorical_variables = ['Feature_3'] 
         target_variable = 'target'
         continuous_variables = ['Feature_1','Feature_2']
+        binary_cols = []
+        
+        
+    ######## Simulated Data
+    elif which_dataset == 'Simulated Data One Dimension':  
+        df = pd.read_csv('simulate_categories_train_two_normals.csv')
+        categorical_variables = ['Feature_1'] 
+        target_variable = 'target'
+        continuous_variables = []
+        binary_cols = []
+        
+    ######## Simulated Data
+    elif which_dataset == 'Uniform and Beta Distribution':  
+        df = pd.read_csv('simulate_categories_train_unif_beta.csv')
+        categorical_variables = ['Feature_1'] 
+        target_variable = 'target'
+        continuous_variables = []
+        binary_cols = []
         
         
     ########  Adult (income >=50k or <50k)
@@ -120,6 +145,30 @@ def dataset_variables(which_dataset):
         df[binary_cols] = df[binary_cols].replace(['Male', 'Female'], [1, 0])
         df[target_variable] = df[target_variable].replace([-1], [0])
         
+        
+    ######## Costumer churns or not
+    elif which_dataset == 'Telco Churn':  
+        df = pd.read_csv('telco-churn.csv')
+        df = df.drop(['customerID'],axis = 1)
+        binary_cols = ['PaperlessBilling','PhoneService','Dependents','Partner','SeniorCitizen','gender']
+        target_variable = 'Churn'
+        continuous_variables = ['TotalCharges','MonthlyCharges','tenure']
+        categorical_variables  = list(set(df.keys()) - set(continuous_variables + [target_variable] + binary_cols))
+        df[binary_cols] = df[binary_cols].replace(['Male', 'Female', 'Yes','No'], [1, 0, 1, 0])
+        df[target_variable] = df[target_variable].replace(['Yes', 'No'], [1, 0])
+        df.drop(df[df['TotalCharges'] == "' '"].index, inplace=True)
+        df.reset_index(inplace=True, drop = True)
+        df['TotalCharges'] = df['TotalCharges'].astype(float)
+        
+        
+    ######## Costumer churns or not
+    elif which_dataset == 'Student Pred':  
+        df = pd.read_csv('student.csv')
+        target_variable = 'pass'
+        continuous_variables = ['absences']
+        binary_cols = ['romantic','internet','higher','nursery','activities','paid','famsup','schoolsup','Pstatus','famsize','address','sex','school']
+        categorical_variables  = list(set(df.keys()) - set(continuous_variables + [target_variable] + binary_cols))
+
     ####### Australian credit approval 
     elif which_dataset == 'Australian Credit Approval':
         df = pd.read_csv('australian.csv')
@@ -147,18 +196,28 @@ def dataset_variables(which_dataset):
         df[target_variable] = df[target_variable].replace(['good','bad'], [1,0])
         
     elif which_dataset == 'Cylinder Bands':
-
+ 
         df = pd.read_csv('cylinder-bands.csv')
         df.columns = df.columns.str.replace("'","")
+        df = df.drop(['cylinder_number','job_number','ink_color','cylinder_division','timestamp'],axis = 1)
         
-        categorical_variables = ['checking_status','credit_history',
-                                  'savings_status','employment','installment_commitment','personal_status','other_parties','residence_since',
-                                  'property_magnitude','purpose','other_payment_plans','housing','job'] 
-        binary_cols = ['own_telephone','foreign_worker']
-        target_variable = 'class'
-        continuous_variables = ['duration','credit_amount','age','existing_credits','num_dependents']
-        df[binary_cols] = df[binary_cols].replace(['yes','none','no'], [1,0,0])
-        df[target_variable] = df[target_variable].replace(['good','bad'], [1,0])
+       
+        binary_cols = []
+        target_variable = 'band_type'
+        continuous_variables = ['proof_cut','caliper','ink_temperature','anode_space_ratio']
+        categorical_variables  = list(set(df.keys()) - set(continuous_variables + [target_variable] + binary_cols))
+        df[target_variable] = df[target_variable].replace(['noband','band'], [0,1])
+    
+    elif which_dataset == 'Dresses Sale':
+ 
+        df = pd.read_csv('dresses.csv')
+        
+       
+        binary_cols = []
+        target_variable = 'Class'
+        continuous_variables = ['V4']
+        categorical_variables  = list(set(df.keys()) - set(continuous_variables + [target_variable] + binary_cols))
+        df[target_variable] = df[target_variable].replace([2], [0])
 
     return df, categorical_variables, continuous_variables, binary_cols, target_variable
 

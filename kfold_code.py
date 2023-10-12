@@ -52,7 +52,7 @@ def k_fold_target_encoding(df, df_test, categorical_variables, target_variable, 
         modified_df_test[new_column] = modified_df_test[categorical_variable].copy()
        
        
-        kf = KFold(n_splits=how_many_folds, shuffle=False)
+        kf = KFold(n_splits=how_many_folds, shuffle=True)
         categories = modified_df[categorical_variable].unique()
            
         for i, (train_index, test_index) in enumerate(kf.split(modified_df)):

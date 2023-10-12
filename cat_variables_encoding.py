@@ -162,8 +162,7 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     
     cat_df_test_difftest = df_test.copy()
     cat_df_test_shuffle = df_test.copy()
-    dictionary_cat={}
-    dictionary_cat_shuffle = {}
+    
     
     final_cat_df = cat_df.copy()
     how_many_permutations = 10
@@ -182,6 +181,8 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     
     
     for col in categorical_variables:
+        dictionary_cat={}
+        dictionary_cat_shuffle = {}
         unique_cat = list(set(df[col]))
 
         for category in unique_cat:
@@ -209,23 +210,23 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
     
     
     #### the 10-Fold Target Encoding
-    modified_df10, modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='TAR')
+    modified_df10, modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='target')
     X_target10 =  dataset_to_Xandy(modified_df10, target_variable, only_X = True)
     X_target_test10 =  dataset_to_Xandy(modified_df_test10, target_variable, only_X = True)
 
     #### the 5-Fold Target Encoding
-    modified_df5, modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='TAR')
+    modified_df5, modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='target')
     X_target5 =  dataset_to_Xandy(modified_df5, target_variable, only_X = True)
     X_target_test5 =  dataset_to_Xandy(modified_df_test5, target_variable, only_X = True)
 
 
     #### the 10-Fold GLMM Encoding
-    glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='GLMM')
+    glmm_modified_df10,  glmm_modified_df_test10 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=10, which_encoder='glmm')
     X_glmm10 =  dataset_to_Xandy(glmm_modified_df10, target_variable, only_X = True)
     X_glmm_test10 =  dataset_to_Xandy(glmm_modified_df_test10, target_variable, only_X = True)
 
     #### the 5-Fold GLMM Encoding
-    glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='GLMM')
+    glmm_modified_df5,  glmm_modified_df_test5 = k_fold_target_encoding(df, df_test, categorical_variables, target_variable, how_many_folds=5, which_encoder='glmm')
     X_glmm5 =  dataset_to_Xandy(glmm_modified_df5, target_variable, only_X = True)
     X_glmm_test5 =  dataset_to_Xandy(glmm_modified_df_test5, target_variable, only_X = True)
 
@@ -243,6 +244,8 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
             print(str(method) + ' '+str(classifier))
         
             if method == 'NO_CAT':
+                X_nocat = standardise_cols_dataset(X_nocat, cols = continuous_variables)
+                X_test_nocat = standardise_cols_dataset(X_test_nocat, cols = continuous_variables)
                 auc = calc_conf_matrix(X_nocat,y_train,X_test_nocat,y_test,classifier)
             elif method == 'ORD':
                 auc =  calc_conf_matrix(X_simple,y_train,X_simple_test, y_test, classifier)
@@ -251,30 +254,56 @@ def whole_process_categorical(df, df_test, categorical_variables, continuous_var
             elif method == 'EFF':
                 auc = calc_conf_matrix(X_effect,y_train,X_effect_test,y_test, classifier)
             elif method == 'WOE':
+                X_woe = standardise_cols_dataset(X_woe, cols = X_woe.columns)
+                X_woe_test = standardise_cols_dataset(X_woe_test, cols = X_woe_test.columns)
                 auc = calc_conf_matrix(X_woe,y_train,X_woe_test,y_test, classifier)
             elif method == 'TAR':
+                X_target = standardise_cols_dataset(X_target, cols = X_target.columns)
+                X_target_test = standardise_cols_dataset(X_target_test, cols = X_target_test.columns)
                 auc = calc_conf_matrix(X_target,y_train,X_target_test,y_test, classifier)
             elif method == 'TAR_W':
+                X_target_w = standardise_cols_dataset(X_target_w, cols = X_target_w.columns)
+                X_target_w_test = standardise_cols_dataset(X_target_w_test, cols = X_target_w_test.columns)
                 auc = calc_conf_matrix(X_target_w,y_train,X_target_w_test,y_test, classifier)
             elif method == 'GLMM':
+                X_glmm = standardise_cols_dataset(X_glmm, cols = X_glmm.columns)
+                X_glmm_test = standardise_cols_dataset(X_glmm_test, cols = X_glmm_test.columns)
                 auc = calc_conf_matrix(X_glmm,y_train,X_glmm_test,y_test, classifier)
             elif method == 'LOO':
+                X_leave = standardise_cols_dataset(X_leave, cols = X_leave.columns)
+                X_leave_test = standardise_cols_dataset(X_leave_test, cols = X_leave_test.columns)
                 auc = calc_conf_matrix(X_leave,y_train,X_leave_test,y_test, classifier)
             elif method == 'LOO_T':
+                X_leave = standardise_cols_dataset(X_leave, cols = X_leave.columns)
+                X_leave_difftest = standardise_cols_dataset(X_leave_difftest, cols = X_leave_difftest.columns)
                 auc = calc_conf_matrix(X_leave,y_train,X_leave_difftest,y_test, classifier)
             elif method == 'CAT':
+                X_cat = standardise_cols_dataset(X_cat, cols = X_cat.columns)
+                X_cat_test = standardise_cols_dataset(X_cat_test, cols = X_cat_test.columns)
                 auc = calc_conf_matrix(X_cat,y_train,X_cat_test,y_test, classifier)
             elif method == 'CAT_T':
+                X_cat = standardise_cols_dataset(X_cat, cols = X_cat.columns)
+                X_cat_test_difftest = standardise_cols_dataset(X_cat_test_difftest, cols = X_cat_test_difftest.columns)
                 auc = calc_conf_matrix(X_cat,y_train,X_cat_test_difftest,y_test, classifier)
             elif method == 'CAT_S_5':
+                X_cat_shuffle = standardise_cols_dataset(X_cat_shuffle, cols = X_cat_shuffle.columns)
+                X_cat_test_shuffle = standardise_cols_dataset(X_cat_test_shuffle, cols = X_cat_test_shuffle.columns)
                 auc = calc_conf_matrix(X_cat_shuffle,y_train,X_cat_test_shuffle,y_test, classifier)
             elif method =='TAR_10':
+                X_target10 = standardise_cols_dataset(X_target10, cols = X_target10.columns)
+                X_target_test10 = standardise_cols_dataset(X_target_test10, cols = X_target_test10.columns)
                 auc = calc_conf_matrix(X_target10,y_train,X_target_test10,y_test, classifier)
             elif method == 'TAR_5':
+                X_target5 = standardise_cols_dataset(X_target5, cols = X_target5.columns)
+                X_target_test5 = standardise_cols_dataset(X_target_test5, cols = X_target_test5.columns)
                 auc = calc_conf_matrix(X_target5,y_train,X_target_test5,y_test, classifier)
             elif method == 'GLMM_5':
+                X_glmm5 = standardise_cols_dataset(X_glmm5, cols = X_glmm5.columns)
+                X_glmm_test5 = standardise_cols_dataset(X_glmm_test5, cols = X_glmm_test5.columns)
                 auc = calc_conf_matrix(X_glmm5,y_train,X_glmm_test5,y_test, classifier)
             elif method == 'GLMM_10':
+                X_glmm10 = standardise_cols_dataset(X_glmm10, cols = X_glmm10.columns)
+                X_glmm_test10 = standardise_cols_dataset(X_glmm_test10, cols = X_glmm_test10.columns)
                 auc = calc_conf_matrix(X_glmm10,y_train,X_glmm_test10,y_test, classifier)
  
             this.append(np.round(auc,3))
@@ -296,8 +325,25 @@ classifiers = ['logistic','kNN','dec_tree','rand_for','grad_boost']
 ##########################################################################
 
 ## Pick dataset
+which_dataset = 'Income Prediction'
+which_dataset = 'Australian Credit Approval'
 which_dataset = 'Good/bad Credit Risks'
+which_dataset = 'Telco Churn'
+which_dataset = 'Student Pred'
+which_dataset = 'Cylinder Bands'
+which_dataset = 'Dresses Sale'
+which_dataset = 'Mushroom'
+
 df, categorical_variables, continuous_variables, binary_cols, target_variable = dataset_variables(which_dataset)
+
+
+if which_dataset == 'Simulated Data One Dimension':
+    methods.remove('NO_CAT') 
+
+
+if which_dataset == 'Mushroom':
+    methods.remove('NO_CAT') 
+count = df[categorical_variables].nunique()
 
 
 
